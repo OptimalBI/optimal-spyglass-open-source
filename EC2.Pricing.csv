@@ -1,0 +1,26 @@
+EC2.NAME,vCPU,ECU,Memory (GiB),Instance Storage (GB),Linux/UNIX Usage,Cost.Per.Hour
+t1.micro,1,Variable,1,EBS Only,$0.020 per Hour,0.027
+t2.micro,1,Variable,1,EBS Only,$0.020 per Hour,0.02
+t2.small,1,Variable,2,EBS Only,$0.040 per Hour,0.04
+t2.medium,2,Variable,4,EBS Only,$0.080 per Hour,0.08
+m1.medium,1,Variable,3.75,EBS Only,$0.117 per Hour,0.117
+m3.medium,1,3,3.75,1 x 4 SSD,$0.098 per Hour,0.098
+m3.large,2,6.5,7.5,1 x 32 SSD,$0.196 per Hour,0.196
+m3.xlarge,4,13,15,2 x 40 SSD,$0.392 per Hour,0.392
+m3.2xlarge,8,26,30,2 x 80 SSD,$0.784 per Hour,0.784
+c3.large,2,7,3.75,2 x 16 SSD,$0.132 per Hour,0.132
+c3.xlarge,4,14,7.5,2 x 40 SSD,$0.265 per Hour,0.265
+c3.2xlarge,8,28,15,2 x 80 SSD,$0.529 per Hour,0.529
+c3.4xlarge,16,55,30,2 x 160 SSD,$1.058 per Hour,1.058
+c3.8xlarge,32,108,60,2 x 320 SSD,$2.117 per Hour,2.117
+g2.2xlarge,8,26,15,60 SSD,$0.898 per Hour,0.898
+r3.large,2,6.5,15,1 x 32 SSD,$0.210 per Hour,0.21
+r3.xlarge,4,13,30.5,1 x 80 SSD,$0.420 per Hour,0.42
+r3.2xlarge,8,26,61,1 x 160 SSD,$0.840 per Hour,0.84
+r3.4xlarge,16,52,122,1 x 320 SSD,$1.680 per Hour,1.68
+r3.8xlarge,32,104,244,2 x 320 SSD,$3.360 per Hour,3.36
+i2.xlarge,4,14,30.5,1 x 800 SSD,$1.018 per Hour,1.018
+i2.2xlarge,8,27,61,2 x 800 SSD,$2.035 per Hour,2.035
+i2.4xlarge,16,53,122,4 x 800 SSD,$4.070 per Hour,4.07
+i2.8xlarge,32,104,244,8 x 800 SSD,$8.140 per Hour,8.14
+hs1.8xlarge,16,35,117,24 x 2048,$5.570 per Hour,5.57

@@ -1,0 +1,6 @@
+.idea/
+*.iml
+target/
+credentials
+log.txt
+settings.cfg
