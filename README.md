@@ -31,6 +31,8 @@ Download the latest pre-build release from https://github.com/OptimalBI/optimal-
 * Create a local copy of the repository using git clone https://github.com/OptimalBI/optimal-spyglass-open-source.git
 * Navigate to the directory in a terminal window
 * Run "mvn package" to create the .jar in the /target directory
+* Copy the OptimalSpyglass-x.x.x.-with-dependencies.jar to the desired directory.
+* Copy the EC2.Pricing.csv to that same directory
 
 ## Run instructions (All User): ##
 * Run "OptimalSpyglass-x.x.x.jar"
