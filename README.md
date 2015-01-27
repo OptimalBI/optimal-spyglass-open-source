@@ -1,8 +1,8 @@
 # OptimalSpyglass v0.0.6#
+Copyright 2015 OptimalBI - Licensed under the Apache License, Version 2.0
 
 ## The story: ##
-At OptimalBI we use many AWS accounts, and from time to time use more than one region. This caused an issue when we didn't realise we had AWS resources running that didn't need to be! We looked around and didn't find a free, easy-to-use solution to give us cross-account, cross-region visibility of how much we are spending on AWS at a point in time. So we built one.
-Hence OptimalSpyglass was born!
+At OptimalBI we use many AWS accounts, and from time to time more than one region. This caused an issue when we didn't realise we had AWS resources running that didn't need to be! We looked around and didn't find a free, easy-to-use solution to give us cross-account, cross-region visibility of what's running and an estimated cost per hour. So we built one, and OptimalSpyglass was born!
 
 ## What it does: ##
 This app is designed to help see what you have running in the AWS cloud, across regions and accounts.
@@ -17,13 +17,13 @@ It should also help showing how much this is currently costing you.
 * Local install of Maven to compile the application from source (http://maven.apache.org/)
 * Git installed to copy the repository    
 
-## Java install instructions (Windows/OSX, All users): ##
+## Java install instructions (Windows/OSX, all users): ##
 * Uninstall all versions of Java
 * Download Java 8 from https://java.com/en/download/
 * Follow the on-screen instructions
 * Reboot the computer to make sure the PATH is correct
 
-## Download instructions (Pre-built app Users): ##
+## Download instructions (Pre-built app users): ##
 Download the latest pre-build release from https://github.com/OptimalBI/optimal-spyglass-open-source/releases
 
 ## Download and build instructions (Advanced users): ##
@@ -31,15 +31,15 @@ Download the latest pre-build release from https://github.com/OptimalBI/optimal-
 * Create a local copy of the repository using git clone https://github.com/OptimalBI/optimal-spyglass-open-source.git
 * Navigate to the directory in a terminal window
 * Run "mvn package" to create the .jar in the /target directory
-* Copy the OptimalSpyglass-x.x.x.-with-dependencies.jar to the desired directory.
+* Copy the OptimalSpyglass-x.x.x.-with-dependencies.jar to your desired run directory.
 * Copy the EC2.Pricing.csv to that same directory
 
-## Run instructions (All User): ##
+## Run instructions (All users): ##
 * Run "OptimalSpyglass-x.x.x.jar"
 * Input the password you wish to use to access the program. This will be used as the key to encrypt your AWS access keys for this application. Please use best password practices!
 * Follow the on-screen prompts to add your AWS Access Keys as required.
 * Once the app is running select the desired regions with the button on the left.
-* If any bugs are found please create a bug report in the section on github!
+* If any bugs are found please create a bug report in the section on GitHub!
 
 ## Security: ##
 * Security of the credentials file is the responsibility of the user
