@@ -78,8 +78,8 @@ Please see GitHub issue tracking at https://github.com/OptimalBI/optimal-spyglas
 ## Patched issues: ##
 Please see the change log below.
 
-## Feedback, suggestions, bugs: ##
-Please submit these to GitHub issue tracking at https://github.com/OptimalBI/optimal-spyglass-open-source/issues
+## Feedback, suggestions, bugs, contributions: ##
+Please submit these to GitHub issue tracking at https://github.com/OptimalBI/optimal-spyglass-open-source/issues or join us in developing OptimalSpyglass by forking the project and then making a pull request!
 
 ## Change log: ##
 
