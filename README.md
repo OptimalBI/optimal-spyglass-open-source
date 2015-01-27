@@ -47,22 +47,22 @@ Download the latest pre-build release from https://github.com/OptimalBI/optimal-
 * The app will then require a password to login each use
 * The access key to AWS needs only to have read-only permissions to all services
 
-## Current Functionality: ##
+## Current functionality: ##
 * Multiple accounts
 * Multiple regions
 * List all Ec2 and running Redshift,RDS from those regions
 * Provide CPU Util graph for Ec2 (maximum and median usage across six four-hour blocks per day, for the prior seven days)
 * Securing key is currently the responsibility of the user
 * Pricing based on supplied .csv files for ec2 (See root directory)
+* Provide standard encryption to the Secret Keys via login password method
 ```
 	The app will read the .csv file (EC2.Pricing.csv) and match the "EC2.NAME" to ec2 instance types.
 	If it has one then the pricing from "Cost.Per.Hour" will be used to calculate cost.
 	The app will not take OS or Spot/Reserved instances into consideration.
 	It is the end users responsibility to keep the pricing up to date
 ```
-* Provide standard encryption to the Secret Keys via login password method
 
-## Planned Functionality: ##
+## Planned functionality: ##
 * Scheduled start and stop for all services
 * Listing all AWS services across all accounts
 * Unmanned management of AWS services
@@ -72,9 +72,14 @@ Download the latest pre-build release from https://github.com/OptimalBI/optimal-
 * Current cost per hour of each service displayed
 * Provide start and stop for Ec2 (where access key allows this privilege)
 
-## Current Known Issues: ##
+## Current known issues: ##
+Please see GitHub issue tracking at https://github.com/OptimalBI/optimal-spyglass-open-source/issues
 
-## Patched Issues: ##
+## Patched issues: ##
+Please see the change log below.
+
+## Feedback, suggestions, bugs: ##
+Please submit these to GitHub issue tracking at https://github.com/OptimalBI/optimal-spyglass-open-source/issues
 
 ## Change log: ##
 
