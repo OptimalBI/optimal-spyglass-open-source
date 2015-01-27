@@ -18,20 +18,21 @@ It should also help showing how much this is currently costing you.
 * Git installed to copy the repository    
 
 ## Java install instructions (Windows/OSX, All users): ##
-* Uninstall all versions of Javaava
+* Uninstall all versions of Java
 * Download Java 8 from https://java.com/en/download/
 * Follow the on-screen instructions
 * Reboot the computer to make sure the PATH is correct
 
-## Download instructions (Pre-built app): ##
-Download the latest pre-build release from **LINK?**
+## Download instructions (Pre-built app Users): ##
+Download the latest pre-build release from https://github.com/OptimalBI/optimal-spyglass-open-source/releases
 
 ## Download and build instructions (Advanced users): ##
-* Create a local copy of the repository using: **LINK?**
+* Check that your maven install works correctly (http://maven.apache.org/guides/getting-started/maven-in-five-minutes.html)
+* Create a local copy of the repository using git clone https://github.com/OptimalBI/optimal-spyglass-open-source.git
 * Navigate to the directory in a terminal window
 * Run "mvn package" to create the .jar in the /target directory
 
-## Run instructions: ##
+## Run instructions (All User): ##
 * Run "OptimalSpyglass-x.x.x.jar"
 * Input the password you wish to use to access the program. This will be used as the key to encrypt your AWS access keys for this application. Please use best password practices!
 * Follow the on-screen prompts to add your AWS Access Keys as required.
@@ -52,10 +53,10 @@ Download the latest pre-build release from **LINK?**
 * Securing key is currently the responsibility of the user
 * Pricing based on supplied .csv files for ec2 (See root directory)
 ```
-            The app will read the .csv file (EC2.Pricing.csv) and match the "EC2.NAME" to ec2 instance types.
-            If it has one then the pricing from "Cost.Per.Hour" will be used to calculate cost.
-            The app will not take OS or Spot/Reserved instances into consideration.
-            It is the end users responsibility to keep the pricing up to date
+	The app will read the .csv file (EC2.Pricing.csv) and match the "EC2.NAME" to ec2 instance types.
+	If it has one then the pricing from "Cost.Per.Hour" will be used to calculate cost.
+	The app will not take OS or Spot/Reserved instances into consideration.
+	It is the end users responsibility to keep the pricing up to date
 ```
 * Provide standard encryption to the Secret Keys via login password method
 
