@@ -610,8 +610,16 @@ public class GUI extends Application {
         ImageView iv1 = guiFactory.imageView("header-logo.png");
         guiComponents.add(iv1);
 
+        //Get application version
+        String version = GUI.class.getPackage().getImplementationVersion();
+
         //Text for the title
-        Label title = new Label("OptimalSpyglass v0.0.6 - Part of the OptimalBI AWS Toolkit");
+        Label title = new Label();
+        if(version==null) {
+            title.setText("OptimalSpyglass - Part of the OptimalBI AWS Toolkit");
+        } else {
+            title.setText("OptimalSpyglass v"+version+" - Part of the OptimalBI AWS Toolkit");
+        }
         title.getStylesheets().add("style.css");
         title.getStyleClass().add("topStyle");
         title.setPrefHeight(35);
