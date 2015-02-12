@@ -32,6 +32,8 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -189,45 +191,98 @@ public class GUI extends Application {
         //Load access keys from file, if they don't exist ask for them
         //TODO: check if keys are valid on load
         if (encryptedPassword.equals("")) {
-            newPassword();
+            newPassword("");
         } else {
             askForPassword("Please enter password", 0);
         }
     }
 
-    private void newPassword() {
+    private void newPassword(String failedMessage) {
+        if(failedMessage == null){
+            failedMessage = "";
+        }
+        resetDialog();
         ArrayList<Node> c = new ArrayList<>();
 
         //Prompt Text
         Label promptLabel = new Label("Please enter the password you want use for this application");
         c.add(promptLabel);
 
+        //Fail Text
+        Label failText = new Label(failedMessage);
+        if(!failedMessage.equals("")){
+            failText.setTextFill(Color.RED);
+            c.add(failText);
+        }
+
         //TextField
+        Label fLabel = new Label("Password:");
+        fLabel.setMinWidth(120);
+        fLabel.setAlignment(Pos.CENTER_LEFT);
         PasswordField field = new PasswordField();
-        field.setPrefWidth(160);
-        field.setOnAction(event -> {
+        field.setMinWidth(160);
+        HBox fBox = new HBox(fLabel,field);
+        fBox.setAlignment(Pos.CENTER_LEFT);
+
+
+        //TextField2
+        Label sFLabel = new Label("Confirmation:");
+        sFLabel.setMinWidth(120);
+        sFLabel.setAlignment(Pos.CENTER_LEFT);
+        PasswordField secondField = new PasswordField();
+        secondField.setMinWidth(160);
+        HBox sFBox = new HBox(sFLabel,secondField);
+        sFBox.setAlignment(Pos.CENTER_LEFT);
+
+        c.add(fBox);
+        c.add(sFBox);
+
+        //Go button
+        Button okBtn = guiFactory.createButton("Okay",120,12);
+        HBox btnBox = new HBox(okBtn);
+        btnBox.setMinWidth(applicationWidth / 3.2);
+        btnBox.setAlignment(Pos.BOTTOM_RIGHT);
+
+        c.add(btnBox);
+
+
+        EventHandler<ActionEvent> go = event -> {
             if (field.getText().length() > 1) {
-                PasswordEncryptor pe = new BasicPasswordEncryptor();
-                encryptedPassword = pe.encryptPassword(field.getText());
-                decryptedPassword = field.getText();
-                encryptor.setPassword(decryptedPassword);
-                saveSettings();
-                dialog.hide();
-                dialog = null;
-                askForCredentials();
+                if(secondField.getText().equals(field.getText())) {
+                    PasswordEncryptor pe = new BasicPasswordEncryptor();
+                    encryptedPassword = pe.encryptPassword(field.getText());
+                    decryptedPassword = field.getText();
+                    encryptor.setPassword(decryptedPassword);
+                    saveSettings();
+                    resetDialog();
+                    askForCredentials();
+                }else {
+                    resetDialog();
+                    newPassword("Please enter the same password twice");
+                }
+            } else {
+                resetDialog();
+                newPassword("Please enter a valid password");
             }
-        });
-        c.add(field);
+        };
+        field.setOnAction(go);
+        secondField.setOnAction(go);
+        okBtn.setOnAction(go);
 
         VBox layout = new VBox();
         layout.getChildren().addAll(c);
         layout.getStylesheets().add(styleSheet);
         layout.getStyleClass().add("popup");
 
-        dialog = guiFactory.setupDialog(applicationWidth / 4, applicationHeight / 2, layout);
-        setLabelCentre("");
+        dialog = guiFactory.setupDialog(applicationWidth / 3.2, applicationHeight / 2, layout);
+        border.setCenter(waitingCentre());
         dialog.show(mainStage);
         dialog.setAutoHide(true);
+    }
+
+    private void resetDialog(){
+        dialog.hide();
+        dialog = null;
     }
 
     private void askForPassword(String promptText, int attempts) {
@@ -316,6 +371,7 @@ public class GUI extends Application {
         layout.setAlignment(Pos.TOP_LEFT);
         border.setCenter(waitingCentre());
 
+        resetDialog();
         dialog = guiFactory.setupDialog(applicationWidth / 2, applicationHeight / 2, layout);
         dialog.show(mainStage);
         dialog.setAutoHide(true);
