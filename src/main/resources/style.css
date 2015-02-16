@@ -77,6 +77,15 @@
     -fx-background-color:#faa61a;
 }
 
+.versionText{
+    -fx-font-family: "Calibri";
+    -fx-font-size: 16px;
+    -fx-text-fill: #FFFFFF;
+    -fx-spacing: 10;
+    -fx-padding: 8;
+    -fx-background-color: red;
+}
+
 .toolbar{
     -fx-spacing: 0;
     -fx-padding: 5;

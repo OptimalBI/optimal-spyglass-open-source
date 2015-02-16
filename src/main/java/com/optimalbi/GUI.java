@@ -24,6 +24,7 @@ import com.optimalbi.Controller.Containers.AmazonCredentials;
 import com.optimalbi.Controller.Containers.AmazonRegion;
 import com.optimalbi.Services.Service;
 import com.optimalbi.SimpleLog.EmptyLogger;
+import com.optimalbi.SimpleLog.FileLogger;
 import com.optimalbi.SimpleLog.GuiLogger;
 import com.optimalbi.SimpleLog.Logger;
 import com.optimalbi.TjfxFactory.TjfxFactory;
@@ -33,13 +34,17 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
-import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.*;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -56,8 +61,14 @@ import org.jasypt.properties.PropertyValueEncryptionUtils;
 import org.jasypt.util.password.BasicPasswordEncryptor;
 import org.jasypt.util.password.PasswordEncryptor;
 
+import java.awt.*;
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -65,8 +76,7 @@ import java.util.stream.Collectors;
  * Version 1.0.1
  */
 public class GUI extends Application {
-    //Bounds of the application
-    private Rectangle2D primaryScreenBounds;
+    private static final int[] curVer = {0, 7, 0};
     private static double applicationHeight;
     private static double applicationWidth;
     private static Stage mainStage;
@@ -76,11 +86,33 @@ public class GUI extends Application {
     private final double buttonHeight = 60;
     private final String styleSheet = "style.css";
     private final BorderPane border = new BorderPane();
+    //Amazon related variables
+    private final File credentialsFile = new File("credentials");
+    private final File settingsFile = new File("settings.cfg");
+    //Bounds of the application
+    private Rectangle2D primaryScreenBounds;
     private Map<String, TextField> fields;
     private Logger logger;
     private Popup dialog;
     private TextArea debugOut = null;
     private TjfxFactory guiFactory;
+    private ProgressBar progressBar = null;
+    private List<AmazonCredentials> credentials;
+    private ArrayList<AmazonAccount> accounts;
+    private List<AmazonRegion> allRegions;
+    private List<Region> currentRegions;
+    //Security stuff
+    private SimplePBEConfig simplePBEConfig;
+    private StandardPBEStringEncryptor encryptor;
+    private String decryptedPassword = "";
+    private String encryptedPassword = "";
+    //Misc other
+    private boolean redrawHook = false;
+    private int totalAreas = 0;
+    private int doneAreas = 0;
+    @SuppressWarnings("FieldCanBeLocal")
+    private String viewedRegion = "summary";
+    private Timer timer;
     private final ChangeListener<Number> paintListener = new ChangeListener<Number>() {
         /*
             Creates a delayed draw event which will create a new thread and wait for delayTime number of seconds
@@ -104,26 +136,50 @@ public class GUI extends Application {
             }
         }
     };
-    //Amazon related variables
-    private final File credentialsFile = new File("credentials");
-    private final File settingsFile = new File("settings.cfg");
-    private ProgressBar progressBar = null;
-    private List<AmazonCredentials> credentials;
-    private ArrayList<AmazonAccount> accounts;
-    private List<AmazonRegion> allRegions;
-    private List<Region> currentRegions;
-    //Security stuff
-    private SimplePBEConfig simplePBEConfig;
-    private StandardPBEStringEncryptor encryptor;
-    private String decryptedPassword = "";
-    private String encryptedPassword = "";
-    //Misc other
-    private boolean redrawHook = false;
-    private int totalAreas = 0;
-    private int doneAreas = 0;
-    @SuppressWarnings("FieldCanBeLocal")
-    private String viewedRegion = "summary";
-    private Timer timer;
+
+    private static void download(URL input, File output) throws IOException {
+        InputStream in = input.openStream();
+        try {
+            OutputStream out = new FileOutputStream(output);
+            try {
+                copy(in, out);
+            } finally {
+                out.close();
+            }
+        } finally {
+            in.close();
+        }
+    }
+
+    private static void copy(InputStream in, OutputStream out) throws IOException {
+        byte[] buffer = new byte[1024];
+        while (true) {
+            int readCount = in.read(buffer);
+            if (readCount == -1) {
+                break;
+            }
+            out.write(buffer, 0, readCount);
+        }
+    }
+
+    public static void openWebpage(URI uri) {
+        Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
+        if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {
+            try {
+                desktop.browse(uri);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void openWebpage(URL url) {
+        try {
+            openWebpage(url.toURI());
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+    }
 
     public void start(Stage primaryStage) throws Exception {
         currentRegions = new ArrayList<>();
@@ -137,6 +193,15 @@ public class GUI extends Application {
 
         //Setup the timer that is used to trigger threaded events
         timer = new Timer();
+
+        try {
+            File logFile = new File("log.txt");
+            logFile.delete();
+            logFile.createNewFile();
+            logger = new FileLogger(logFile);
+        } catch (IOException e) {
+            logger = new EmptyLogger();
+        }
 
         //Setup global GUI variables
         mainStage = primaryStage;
@@ -166,8 +231,9 @@ public class GUI extends Application {
         //Setup the logger with attachment to the GUI, if it fails only use the logger to the console
         try {
             File logFile = new File("log.txt");
-            logFile.delete();
-            logFile.createNewFile();
+            if (!logFile.exists()) {
+                logFile.createNewFile();
+            }
             logger = new GuiLogger(logFile, debugOut);
         } catch (IOException e) {
             logger = new EmptyLogger();
@@ -198,7 +264,7 @@ public class GUI extends Application {
     }
 
     private void newPassword(String failedMessage) {
-        if(failedMessage == null){
+        if (failedMessage == null) {
             failedMessage = "";
         }
         resetDialog();
@@ -210,7 +276,7 @@ public class GUI extends Application {
 
         //Fail Text
         Label failText = new Label(failedMessage);
-        if(!failedMessage.equals("")){
+        if (!failedMessage.equals("")) {
             failText.setTextFill(Color.RED);
             c.add(failText);
         }
@@ -221,7 +287,7 @@ public class GUI extends Application {
         fLabel.setAlignment(Pos.CENTER_LEFT);
         PasswordField field = new PasswordField();
         field.setMinWidth(160);
-        HBox fBox = new HBox(fLabel,field);
+        HBox fBox = new HBox(fLabel, field);
         fBox.setAlignment(Pos.CENTER_LEFT);
 
 
@@ -231,14 +297,14 @@ public class GUI extends Application {
         sFLabel.setAlignment(Pos.CENTER_LEFT);
         PasswordField secondField = new PasswordField();
         secondField.setMinWidth(160);
-        HBox sFBox = new HBox(sFLabel,secondField);
+        HBox sFBox = new HBox(sFLabel, secondField);
         sFBox.setAlignment(Pos.CENTER_LEFT);
 
         c.add(fBox);
         c.add(sFBox);
 
         //Go button
-        Button okBtn = guiFactory.createButton("Okay",120,12);
+        Button okBtn = guiFactory.createButton("Okay", 120, 12);
         HBox btnBox = new HBox(okBtn);
         btnBox.setMinWidth(applicationWidth / 3.2);
         btnBox.setAlignment(Pos.BOTTOM_RIGHT);
@@ -248,7 +314,7 @@ public class GUI extends Application {
 
         EventHandler<ActionEvent> go = event -> {
             if (field.getText().length() > 1) {
-                if(secondField.getText().equals(field.getText())) {
+                if (secondField.getText().equals(field.getText())) {
                     PasswordEncryptor pe = new BasicPasswordEncryptor();
                     encryptedPassword = pe.encryptPassword(field.getText());
                     decryptedPassword = field.getText();
@@ -256,7 +322,7 @@ public class GUI extends Application {
                     saveSettings();
                     resetDialog();
                     askForCredentials();
-                }else {
+                } else {
                     resetDialog();
                     newPassword("Please enter the same password twice");
                 }
@@ -280,9 +346,11 @@ public class GUI extends Application {
         dialog.setAutoHide(true);
     }
 
-    private void resetDialog(){
-        dialog.hide();
-        dialog = null;
+    private void resetDialog() {
+        if (dialog != null) {
+            dialog.hide();
+            dialog = null;
+        }
     }
 
     private void askForPassword(String promptText, int attempts) {
@@ -671,31 +739,49 @@ public class GUI extends Application {
 
         //Text for the title
         Label title = new Label();
-        if(version==null) {
+        if (version == null) {
             title.setText("OptimalSpyglass - Part of the OptimalBI AWS Toolkit");
         } else {
-            title.setText("OptimalSpyglass v"+version+" - Part of the OptimalBI AWS Toolkit");
+            title.setText("OptimalSpyglass v" + version + " - Part of the OptimalBI AWS Toolkit");
         }
         title.getStylesheets().add("style.css");
         title.getStyleClass().add("topStyle");
         title.setPrefHeight(35);
         guiComponents.add(title);
 
-        //Debug toolbar
-        VBox debug = new VBox();
-        //Add test instance
-        Button addTestInstance = guiFactory.createButton("Add test", "button", buttonWidth / 3, buttonHeight / 2);
-        addTestInstance.setAlignment(Pos.CENTER);
-        addTestInstance.setOnAction(event -> {
-            if (accounts.size() > 0) {
-                accounts.get(0).addTest();
-                updatePainting();
+        //Version notification
+        List<Integer> versi = getLatestVersionNumber();
+        logger.debug(String.format("Version info %d.%d.%d", versi.get(0), versi.get(1), versi.get(2)));
+        //Int varibles to clear my head
+        int curMaj = curVer[0];
+        int curMin = curVer[1];
+        int curPatch = curVer[2];
+        int newMaj = versi.get(0);
+        int newMin = versi.get(1);
+        int newPatch = versi.get(2);
+
+        boolean newVersion = false;
+
+        if ((newMaj > curMaj) || (newMaj == curMaj && newMin > curMin) || (newMaj == curMaj && newMin == curMin && newPatch > curPatch)) {
+            newVersion = true;
+        }
+
+        Label versionNotification = new Label("New version available, Click Here");
+        versionNotification.getStylesheets().add("style.css");
+        versionNotification.getStyleClass().add("versionText");
+        versionNotification.setMinWidth(220);
+        versionNotification.setAlignment(Pos.CENTER);
+        versionNotification.setOnMouseClicked(MouseEvent -> {
+            try {
+                openWebpage(new URI("https://github.com/OptimalBI/optimal-spyglass-open-source/releases"));
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
             }
         });
+        if (true) {
+            guiComponents.add(versionNotification);
+        }
 
-        debug.getChildren().add(addTestInstance);
-        debug.setAlignment(Pos.CENTER);
-        if (debugMode) guiComponents.add(debug);
 
         topLayout.getChildren().addAll(guiComponents);
         topLayout.setAlignment(Pos.CENTER);
@@ -724,6 +810,39 @@ public class GUI extends Application {
         });
         outline.getChildren().addAll(topLayout, botLayout);
         return outline;
+    }
+
+    private List<Integer> getLatestVersionNumber() {
+        List<Integer> vers = new ArrayList<>();
+        File versionTemp = new File("verTemp.txt");
+        versionTemp.deleteOnExit();
+        vers.add(-1);
+        vers.add(-1);
+        vers.add(-1);
+        try {
+            URL dl = new URL("https://raw.githubusercontent.com/OptimalBI/optimal-spyglass-open-source/v0.7/version");
+            download(dl, versionTemp);
+            BufferedReader fileReader = null;
+            try {
+                fileReader = new BufferedReader(new FileReader(versionTemp));
+                String line = fileReader.readLine();
+                String[] split = line.split(" ");
+                vers.set(0, Integer.parseInt(split[0]));
+                vers.set(1, Integer.parseInt(split[1]));
+                vers.set(2, Integer.parseInt(split[2]));
+            } catch (IOException e) {
+                logger.error("Failed to read settings file: " + e.getMessage());
+                setLabelCentre("Failed to read settings file: " + e.getMessage());
+            }
+            versionTemp.delete();
+            return vers;
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return vers;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return vers;
+        }
     }
 
     private ToolBar updateToolbar() {
