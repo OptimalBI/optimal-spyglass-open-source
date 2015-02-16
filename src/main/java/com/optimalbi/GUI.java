@@ -680,6 +680,11 @@ public class GUI extends Application {
         layout.getStyleClass().add("otherBotStyle");
         layout.setPrefSize(applicationWidth, 20);
         layout.setAlignment(Pos.BOTTOM_LEFT);
+        layout.setOnMouseClicked(event -> {
+            if (dialog != null) {
+                dialog.show(mainStage);
+            }
+        });
         return layout;
     }
 
