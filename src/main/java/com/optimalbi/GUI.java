@@ -225,7 +225,7 @@ public class GUI extends Application {
                 }
             }
         });
-        mainStage.setMaximized(true);
+//        mainStage.setMaximized(true);
 
 
         //Setup the logger with attachment to the GUI, if it fails only use the logger to the console
@@ -778,7 +778,7 @@ public class GUI extends Application {
                 e.printStackTrace();
             }
         });
-        if (true) {
+        if (newVersion) {
             guiComponents.add(versionNotification);
         }
 
