@@ -1,4 +1,4 @@
-# OptimalSpyglass v0.0.6#
+# OptimalSpyglass v0.7#
 Copyright 2015 OptimalBI - Licensed under the Apache License, Version 2.0
 
 ## The story: ##
@@ -113,4 +113,8 @@ Please submit these to GitHub issue tracking at https://github.com/OptimalBI/opt
 		-Fixed password GUI bugs
 		-Updated branding
 		-Updated licence
+	v0.7
+	    -Updated the dialog drawing system to help it to draw when needed
+	    -Tweaked OSX fonts to make it look more similar
+	    -Added a version notification system to help people know about new releases
 ```
