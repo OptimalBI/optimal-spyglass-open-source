@@ -825,7 +825,7 @@ public class GUI extends Application {
         vers.add(-1);
         vers.add(-1);
         try {
-            URL dl = new URL("https://raw.githubusercontent.com/OptimalBI/optimal-spyglass-open-source/v0.7/version");
+            URL dl = new URL("https://raw.githubusercontent.com/OptimalBI/optimal-spyglass-open-source/master/version");
             download(dl, versionTemp);
             BufferedReader fileReader = null;
             try {
