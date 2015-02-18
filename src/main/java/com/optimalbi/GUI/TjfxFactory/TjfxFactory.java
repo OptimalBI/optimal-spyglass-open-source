@@ -14,7 +14,7 @@
    limitations under the License.
  */
 
-package com.optimalbi.TjfxFactory;
+package com.optimalbi.GUI.TjfxFactory;
 
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -32,10 +32,18 @@ public class TjfxFactory {
     private double buttonWidth;
     private double buttonHeight;
     private final String styleSheet;
+    private String googleSheet = "";
     public TjfxFactory(double buttonWidth, double buttonHeight, String styleSheet){
         this.buttonHeight = buttonHeight;
         this.buttonWidth = buttonWidth;
         this.styleSheet = styleSheet;
+    }
+
+    public TjfxFactory(double buttonWidth, double buttonHeight, String styleSheet, String googleSheet){
+        this.buttonHeight = buttonHeight;
+        this.buttonWidth = buttonWidth;
+        this.styleSheet = styleSheet;
+        this.googleSheet = googleSheet;
     }
 
     Button createButton(String title, String styleClass){
@@ -44,9 +52,11 @@ public class TjfxFactory {
             button.setPrefSize(buttonWidth, buttonHeight);
         }
         button.getStylesheets().add(styleSheet);
+        if(!googleSheet.equals("")) button.getStylesheets().add(googleSheet);
         if(styleClass != null) {
             button.getStyleClass().add(styleClass);
         }
+        button.setFocusTraversable(false);
         return button;
     }
 
@@ -66,7 +76,6 @@ public class TjfxFactory {
         Button button = createButton(title,styleClass);
         this.buttonWidth = saveButtonWidth;
         this.buttonHeight = saveButtonHeight;
-
         return button;
     }
 

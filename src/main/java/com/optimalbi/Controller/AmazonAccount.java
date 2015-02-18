@@ -254,10 +254,6 @@ public class AmazonAccount{
         return runningCount;
     }
 
-    public void addTest() {
-        services.add(new TestInstance(getCredentials(), 2500, getLogger()));
-    }
-
     private Map<String, Double> readEc2Pricing() {
         Map<String, Double> pricing = new HashMap<>();
 

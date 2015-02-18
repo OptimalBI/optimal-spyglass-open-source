@@ -14,7 +14,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk</artifactId>
-            <version>1.9.17</version>
+            <version>1.9.19</version>
         </dependency>
         <dependency>
             <groupId>org.jasypt</groupId>
@@ -64,7 +64,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>com.optimalbi.GUI</mainClass>
+                            <mainClass>com.optimalbi.GUI.Main</mainClass>
                             <addDefaultImplementationEntries>
                                 true
                             </addDefaultImplementationEntries>

@@ -1,4 +1,4 @@
-package com.optimalbi;
+package com.optimalbi.GUI;
 
 /*
    Copyright 2015 OptimalBI
@@ -27,7 +27,7 @@ import com.optimalbi.SimpleLog.EmptyLogger;
 import com.optimalbi.SimpleLog.FileLogger;
 import com.optimalbi.SimpleLog.GuiLogger;
 import com.optimalbi.SimpleLog.Logger;
-import com.optimalbi.TjfxFactory.TjfxFactory;
+import com.optimalbi.GUI.TjfxFactory.TjfxFactory;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -73,10 +73,10 @@ import java.util.stream.Collectors;
 
 /**
  * Created by Timothy Gray on 30/10/2014.
- * Version 1.0.1
+ * Version 2.0
  */
-public class GUI extends Application {
-    private static final int[] curVer = {0, 7, 0};
+public class Main extends Application {
+    private static final int[] curVer = {0, 8, 0};
     private static double applicationHeight;
     private static double applicationWidth;
     private static Stage mainStage;
@@ -85,6 +85,7 @@ public class GUI extends Application {
     private final double buttonWidth = 240;
     private final double buttonHeight = 60;
     private final String styleSheet = "style.css";
+    private final String googleSheet = "http://fonts.googleapis.com/css?family=Open+Sans";
     private final BorderPane border = new BorderPane();
     //Amazon related variables
     private final File credentialsFile = new File("credentials");
@@ -126,10 +127,12 @@ public class GUI extends Application {
                     @Override
                     public void run() {
                         primaryScreenBounds = Screen.getPrimary().getVisualBounds();
-                        applicationHeight = primaryScreenBounds.getHeight() / 1.11;
-                        applicationWidth = primaryScreenBounds.getWidth() / 1.11;
-                        Platform.runLater(GUI.this::updatePainting);
+                        applicationHeight = mainStage.getHeight();
+                        applicationWidth = mainStage.getWidth();
+                        Platform.runLater(Main.this::updatePainting);
                         Platform.runLater(() -> border.setTop(createTop()));
+                        Platform.runLater(() -> border.setBottom(createBottom()));
+                        Platform.runLater(() -> border.setLeft(createLeft()));
                     }
                 };
                 timer.schedule(task, delayTime);
@@ -173,14 +176,6 @@ public class GUI extends Application {
         }
     }
 
-    public static void openWebpage(URL url) {
-        try {
-            openWebpage(url.toURI());
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-    }
-
     public void start(Stage primaryStage) throws Exception {
         currentRegions = new ArrayList<>();
         credentials = new ArrayList<>();
@@ -203,12 +198,13 @@ public class GUI extends Application {
             logger = new EmptyLogger();
         }
 
-        //Setup global GUI variables
+        //Setup global Main variables
         mainStage = primaryStage;
         primaryScreenBounds = Screen.getPrimary().getVisualBounds();
         applicationHeight = primaryScreenBounds.getHeight() / 1.11;
         applicationWidth = primaryScreenBounds.getWidth() / 1.11;
         guiFactory = new TjfxFactory(buttonWidth, buttonHeight, styleSheet);
+        border.getStylesheets().add(googleSheet);
         createGUI();
 
         //TODO: Add icon image;
@@ -228,16 +224,7 @@ public class GUI extends Application {
 //        mainStage.setMaximized(true);
 
 
-        //Setup the logger with attachment to the GUI, if it fails only use the logger to the console
-        try {
-            File logFile = new File("log.txt");
-            if (!logFile.exists()) {
-                logFile.createNewFile();
-            }
-            logger = new GuiLogger(logFile, debugOut);
-        } catch (IOException e) {
-            logger = new EmptyLogger();
-        }
+        //Setup the logger with attachment to the Main, if it fails only use the logger to the console
         logger.info("Hello chaps");
 
         //Process the settings file
@@ -354,7 +341,7 @@ public class GUI extends Application {
     }
 
     private void askForPassword(String promptText, int attempts) {
-        double textWidth = 160; //The minimum size the labels take up (aligns the GUI)
+        double textWidth = 160; //The minimum size the labels take up (aligns the Main)
         fields = new HashMap<>(); //Reset the fields collection so we can use it from the callback method
         VBox layout = new VBox();
         layout.setPrefWidth(applicationWidth / 3);
@@ -453,7 +440,6 @@ public class GUI extends Application {
     }
 
     private void createGUI() {
-
         //Create the gui sections
         border.setCenter(waitingCentre());
         border.setLeft(createLeft());
@@ -485,7 +471,7 @@ public class GUI extends Application {
 
     private VBox createLeft() {
         /*
-         *Some GUI components are created then not assigned, these are debug only components
+         *Some Main components are created then not assigned, these are debug only components
          */
         List<Node> guiComponents = new ArrayList<>();
         VBox layout = new VBox();
@@ -505,14 +491,14 @@ public class GUI extends Application {
             TimerTask task = new TimerTask() {
                 @Override
                 public void run() {
-                    Platform.runLater(GUI.this::createControllers);
+                    Platform.runLater(Main.this::createControllers);
                 }
             };
             timer.schedule(task, 100);
         });
         guiComponents.add(update);
 
-        //Refresh Button - This button only redraws the GUI
+        //Refresh Button - This button only redraws the Main
         Button refresh = guiFactory.createButton("Refresh");
         refresh.setAlignment(Pos.BASELINE_LEFT);
         refresh.setOnAction(event -> {
@@ -521,7 +507,7 @@ public class GUI extends Application {
             TimerTask task = new TimerTask() {
                 @Override
                 public void run() {
-                    Platform.runLater(GUI.this::updatePainting);
+                    Platform.runLater(Main.this::updatePainting);
                 }
             };
             timer.schedule(task, 200);
@@ -546,6 +532,8 @@ public class GUI extends Application {
         Button exit = guiFactory.createButton("Exit");
         exit.setAlignment(Pos.BASELINE_LEFT);
         exit.setOnAction(event -> System.exit(0));
+        exit.setFocusTraversable(true);
+        exit.requestFocus();
         //Exit box
         HBox exitBox = new HBox(exit);
         exitBox.setMinHeight(buttonHeight);
@@ -657,23 +645,23 @@ public class GUI extends Application {
         bottomLeft.setAlignment(Pos.BOTTOM_LEFT);
         bottomLeft.getStylesheets().add("style.css");
         bottomLeft.getStyleClass().add("botStyle");
-        bottomLeft.setPrefSize(cr.getPrefWidth(), 20);
+        bottomLeft.setPrefSize(applicationWidth/2, 20);
         bottomLeft.getChildren().add(cr);
         guiComponents.add(bottomLeft); //Add after debug output
 
-        //Debug window - fake console output for if we are debugging
-        if (debugOut == null) {
-            debugOut = new TextArea();
-        }
-        debugOut.setEditable(false);
-        debugOut.setPrefWidth((applicationWidth - (cr.getPrefWidth() + 10)));
-        debugOut.setPrefHeight(60);
-        debugOut.getStyleClass().add("textField");
-        debugOut.getStylesheets().add(styleSheet);
-        debugOut.setMaxHeight(60);
-        debugOut.setScrollTop(debugOut.getHeight());
-        debugOut.setWrapText(true);
-        if (debugMode) guiComponents.add(debugOut);
+        //Version Text
+        HBox verTextBox = new HBox();
+        Label verText = new Label(String.format("Version: %d.%d.%d",curVer[0],curVer[1],curVer[2]));
+        verText.setMinWidth(320);
+        verText.setTextFill(Color.WHITE);
+        verText.setPrefWidth(320);
+        verText.setAlignment(Pos.BOTTOM_RIGHT);
+        verTextBox.setAlignment(Pos.BOTTOM_RIGHT);
+        verTextBox.getStylesheets().add("style.css");
+        verTextBox.getStyleClass().add("botStyle");
+        verTextBox.setPrefSize(applicationWidth / 2, 20);
+        verTextBox.getChildren().add(verText);
+        guiComponents.add(verTextBox); //Add after debug output
 
         layout.getChildren().addAll(guiComponents);
         layout.getStylesheets().add("style.css");
@@ -689,7 +677,7 @@ public class GUI extends Application {
     }
 
     private VBox waitingCentre() {
-        progressBar = new ProgressBar(0.0);
+        progressBar = new ProgressBar(0.03);
         progressBar.setPrefWidth(applicationWidth / 2);
         progressBar.setPrefHeight(15);
 
@@ -740,7 +728,7 @@ public class GUI extends Application {
         guiComponents.add(iv1);
 
         //Get application version
-        String version = GUI.class.getPackage().getImplementationVersion();
+        String version = Main.class.getPackage().getImplementationVersion();
 
         //Text for the title
         Label title = new Label();
@@ -756,7 +744,7 @@ public class GUI extends Application {
 
         //Version notification
         List<Integer> versi = getLatestVersionNumber();
-        logger.debug(String.format("Version info %d.%d.%d", versi.get(0), versi.get(1), versi.get(2)));
+        logger.debug(String.format("Remote version: %d.%d.%d. Current version: %d.%d.%d.", versi.get(0), versi.get(1), versi.get(2),curVer[0],curVer[1],curVer[2]));
         //Int varibles to clear my head
         int curMaj = curVer[0];
         int curMin = curVer[1];
@@ -898,7 +886,7 @@ public class GUI extends Application {
 
     private void updatePainting() {
         if (!redrawHook) {
-            //The first time we draw, hook the redraw listener to the changes in the GUI's size
+            //The first time we draw, hook the redraw listener to the changes in the Main's size
             TimerTask task = new TimerTask() {
                 @Override
                 public void run() {
@@ -919,60 +907,19 @@ public class GUI extends Application {
 
     private void drawServiceBoxes(int instancesWide) {
    /*
-    * These loops create the section of the GUI where it is divided by account, the first loop loops over all currently added AWS accounts
+    * These loops create the section of the Main where it is divided by account, the first loop loops over all currently added AWS accounts
     * The second loop goes over the AWS controllers, checks if they belong to the current looping account and if so draws them in their rows
     * If the rows exceed instancesWide it starts a new row
     */
         VBox allInstances = new VBox();
 
         for (AmazonCredentials credential : credentials) {
-            int i = 0;
-
-            VBox thisAccount = new VBox();
-            Label accountLabel = new Label(credential.getAccountName());
-            accountLabel.getStyleClass().add("accountTitle");
-            thisAccount.getChildren().add(accountLabel);
-
             for (AmazonAccount account : accounts) {
                 if (account.getCredentials().getAccountName().equals(credential.getAccountName())) {
-                    List<Service> services = account.getServices();
-                    List<VBox> toDraw = account.drawInstances();
-                    ArrayList<HBox> rows = new ArrayList<>();
-                    HBox currentRow = new HBox();
-                    for (VBox box : toDraw) {
-                        if (viewedRegion.equals("all")) {
-                            box.getStyleClass().add("instance");
-                            currentRow.getChildren().add(box);
-                            i++;
-                        } else {
-                            int index = toDraw.indexOf(box);
-                            if (index >= 0) {
-                                if (services.get(index).serviceRegion().getName().equals(viewedRegion)) {
-                                    box.getStyleClass().add("instance");
-                                    currentRow.getChildren().add(box);
-                                    i++;
-                                }
-                            }
-                        }
-                        if (i + 1 >= instancesWide) {
-                            rows.add(currentRow);
-                            currentRow = new HBox();
-                            i = 0;
-                        }
-                    }
-                    rows.add(currentRow);
-                    for (HBox row : rows) {
-                        row.getStylesheets().add(styleSheet);
-                        row.getStyleClass().add("instanceRows");
-                    }
-                    if (rows.size() > 0) {
-                        thisAccount.getChildren().addAll(rows);
-                        thisAccount.getStylesheets().add("style.css");
-                        thisAccount.getStyleClass().add("centreStyle");
-                    }
+
                 }
             }
-            allInstances.getChildren().add(thisAccount);
+//            allInstances.getChildren().add(thisAccount);
         }
 
         allInstances.getStylesheets().add(styleSheet);
@@ -987,12 +934,12 @@ public class GUI extends Application {
             }
         });
 
-        //Makes sure this is applied on the main thread so the GUI doesn't throw a fit
+        //Makes sure this is applied on the main thread so the Main doesn't throw a fit
         Platform.runLater(() -> border.setCenter(scrollPane));
     }
 
     private void askForCredentials() {
-        double textWidth = 160; //The minimum size the labels take up (aligns the GUI)
+        double textWidth = 160; //The minimum size the labels take up (aligns the Main)
         fields = new HashMap<>(); //Reset the fields collection so we can use it from the callback method
 
         VBox outerLayout = new VBox();
@@ -1096,7 +1043,7 @@ public class GUI extends Application {
             dialog = null;
             fields = null;
         }
-        Platform.runLater(() -> border.setCenter(GUI.this.waitingCentre()));
+        Platform.runLater(() -> border.setCenter(Main.this.waitingCentre()));
 
         //After saving to file reload the credentials into memory to prevent duplicates
         getAccessKeys();
@@ -1220,7 +1167,7 @@ public class GUI extends Application {
                             ready = false;
                         }
                     }
-                    //If all controllers are ready then draw the GUI
+                    //If all controllers are ready then draw the Main
                     if (ready) {
                         updatePainting();
                     }
@@ -1240,9 +1187,8 @@ public class GUI extends Application {
 
     private void updateProgress() {
         if (progressBar == null) return;
-
         double progress = ((double) doneAreas / (double) totalAreas);
-        progressBar.setProgress(progress);
+        Platform.runLater(() -> progressBar.setProgress(progress));
     }
 
     private void drawAccountManagement() {
@@ -1495,7 +1441,7 @@ public class GUI extends Application {
     private void drawSummary() {
         int statisticsBoxWidth = 320;
         int labelWidth = 70;
-        double textWidth = 200;
+        double textWidth = 195;
 
 
         HBox outer = new HBox();
@@ -1565,6 +1511,7 @@ public class GUI extends Application {
         List<Node> b = new ArrayList<>();
 
         summaryStats.getChildren().addAll(c);
+        summaryStats.getStylesheets().add(googleSheet);
         summaryStats.getStylesheets().add(styleSheet);
         summaryStats.getStyleClass().add("centreStyle");
         b.add(summaryStats);

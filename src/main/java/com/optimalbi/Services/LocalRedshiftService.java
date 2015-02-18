@@ -140,6 +140,10 @@ public class LocalRedshiftService extends AmazonService {
 
     }
 
+    public Map<String, Double> getPricing() {
+        return null;
+    }
+
     private void drawGraph() {
         Popup popup = new Popup();
         Scene mainScene = drawing.getScene();

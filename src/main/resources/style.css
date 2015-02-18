@@ -1,3 +1,6 @@
+@import url(http://fonts.googleapis.com/css?family=Open+Sans);
+@import url(http://fonts.googleapis.com/css?family=Droid+Sans:400,700);
+
 .root{
     -fx-spacing: 0;
     -fx-padding: 0;
@@ -31,46 +34,17 @@
 }
 
 .leftStyle {
-    -fx-font-family: "Calibri";
-    -fx-font-size: 24px;
+    -fx-font-family: "Droid Sans";
+    -fx-font-size: 32px;
     -fx-text-fill: #000000;
     -fx-spacing: 0;
     -fx-padding: 0;
     -fx-background-color: #3b3b3b;
 }
 
-.text-area {
-    -fx-font-family: Consolas;
-    -fx-font-size: 10px;
-    -fx-background-color: #575757;
-    -fx-text-fill: #FFFFFF;
-    -fx-background-radius: 0;
-
-}
-
-.text-area .content{
-    -fx-background-color: #575757;
-    -fx-text-fill: #FFFFFF;
-    -fx-background-radius: 0;
-
-}
-
-.text-field {
-    -fx-font-family: "Calibri";
-    -fx-font-size: 12px;
-    -fx-background-color: #000000;
-    -fx-border-color: #FFCE71;
-    -fx-text-fill: #000000;
-    -fx-border-width: 1;
-    -fx-background-radius: 0;
-
-
-}
-
 .topStyle, .toolbar, .toolbar:selected {
-    -fx-font-family: "Calibri";
+    -fx-font-family: "Droid Sans";
     -fx-font-size: 30px;
-    -fx-font-weight: bold;
     -fx-text-fill: #FFFFFF;
     -fx-spacing: 10;
     -fx-padding: 8;
@@ -78,7 +52,7 @@
 }
 
 .versionText{
-    -fx-font-family: "Calibri";
+    -fx-font-family: "Droid Sans";
     -fx-font-size: 16px;
     -fx-text-fill: #FFFFFF;
     -fx-spacing: 10;
@@ -97,7 +71,7 @@
 }
 
 .botStyle,.otherBotStyle {
-    -fx-font-family: "Calibri";
+    -fx-font-family: "Droid Sans";
     -fx-font-size: 12px;
     -fx-text-fill: white;
     -fx-spacing: 5;
@@ -106,7 +80,7 @@
 }
 
 .centreStyle {
-    -fx-font-family: "Calibri";
+    -fx-font-family: "Droid Sans";
     -fx-font-size: 32px;
     -fx-text-fill: #000000;
     -fx-spacing: 5;
@@ -114,7 +88,7 @@
 }
 
 .instance {
-    -fx-font-family: "Calibri";
+    -fx-font-family: "Droid Sans";
     -fx-font-size: 18px;
     -fx-text-fill: black;
     -fx-spacing: 0;
@@ -128,7 +102,7 @@
 }
 
 .instanceRows {
-    -fx-font-family: "Calibri";
+    -fx-font-family: "Droid Sans";
     -fx-font-size: 18px;
     -fx-text-fill: black;
     -fx-spacing: 5;
@@ -136,7 +110,7 @@
 }
 
 .popupButtons, .popupButtons2 {
-    -fx-font-family: "Calibri";
+    -fx-font-family: "Droid Sans";
     -fx-font-size: 18px;
     -fx-text-fill: #000000;
     -fx-background-color: #EEE;
@@ -152,7 +126,7 @@
 }
 
 .popup {
-    -fx-font-family: "Calibri";
+    -fx-font-family: "Droid Sans";
     -fx-font-size: 18px;
     -fx-text-fill: #000000;
     -fx-spacing: 30;
@@ -162,7 +136,7 @@
 }
 
 .subpopup{
-    -fx-font-family: "Calibri";
+    -fx-font-family: "Droid Sans";
     -fx-font-size: 18px;
     -fx-text-fill: #000000;
     -fx-spacing: 5;
@@ -170,17 +144,16 @@
 }
 
 .subpopup2{
-    -fx-font-family: "Calibri";
+    -fx-font-family: "Droid Sans";
     -fx-font-size: 18px;
     -fx-text-fill: #000000;
     -fx-spacing: 1;
     -fx-padding: 0;
 }
 
-.button, .buttonDone , .button:selected{
-    -fx-font-family: "Calibri";
-    -fx-font-size: 12px;
-    -fx-font-weight: bold;
+.button, .buttonDone , .button:selected ,.button:focused{
+    -fx-font-family: "Droid Sans";
+    -fx-font-size: 14px;
     -fx-background-color: #3b3b3b;
     -fx-text-fill: #f2f2f2f2;
     -fx-background-radius: 0;
@@ -194,11 +167,10 @@
 .buttonDone{
     -fx-background-color: #666666;
     -fx-text-fill: #ffb01b;
-
 }
 
 .botButton {
-    -fx-font-family: "Calibri";
+    -fx-font-family: "Droid Sans";
         -fx-font-size: 12px;
         -fx-font-weight: bold;
         -fx-background-color: #FFFFFF;
@@ -208,7 +180,7 @@
 
 
 .buttonClear{
-    -fx-font-family: "Calibri";
+    -fx-font-family: "Droid Sans";
     -fx-font-size: 10px;
     -fx-font-weight: normal;
     -fx-background-color: #FF9747;
@@ -216,7 +188,7 @@
 }
 
 .text-field{
-    -fx-font-family: "Arial";
+    -fx-font-family: "Droid Sans";
     -fx-font-size: 18px;
     -fx-background-color: #FFFFFF;
     -fx-text-fill: #000000;
@@ -240,43 +212,43 @@
 }
 
 .textTitle{
-    -fx-font-family: "Calibri";
+    -fx-font-family: "Droid Sans";
     -fx-font-size: 26px;
     -fx-text-fill: orange;
 }
 
 .textLabel{
-    -fx-font-family: "Calibri";
+    -fx-font-family: "Droid Sans";
     -fx-font-size: 18px;
     -fx-text-fill: orange;
 }
 
 .ec2Title{
-    -fx-font-family: "Calibri";
+    -fx-font-family: "Droid Sans";
     -fx-font-size: 26px;
     -fx-text-fill: orange;
 }
 
 .redshiftTitle{
-    -fx-font-family: "Calibri";
+    -fx-font-family: "Droid Sans";
     -fx-font-size: 26px;
     -fx-text-fill: red;
 }
 
 .rdsTitle{
-    -fx-font-family: "Calibri";
+    -fx-font-family: "Droid Sans";
     -fx-font-size: 26px;
     -fx-text-fill: green;
 }
 
 .testInstanceTitle{
-    -fx-font-family: "Calibri";
+    -fx-font-family: "Droid Sans";
     -fx-font-size: 26px;
     -fx-text-fill: purple;
 }
 
 .regionTitle{
-    -fx-font-family: "Calibri";
+    -fx-font-family: "Droid Sans";
     -fx-font-size: 16px;
     -fx-text-fill: steelblue;
 }
@@ -288,13 +260,13 @@
 }
 
 .guiLabel {
-    -fx-font-family: "Calibri";
+    -fx-font-family: "Droid Sans";
     -fx-text-fill: #faa61a;
 }
 
 .statisticsTitle{
-    -fx-font-family: "Calibri";
-    -fx-font-size: 20px;
+    -fx-font-family: "Droid Sans";
+    -fx-font-size: 17px;
     -fx-text-fill: black;
     -fx-padding: 5;
 }

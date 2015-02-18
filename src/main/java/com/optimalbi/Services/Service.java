@@ -64,6 +64,8 @@ public interface Service extends Comparable<Service>{
 
     void attachPricing(Map<String,Double> pricing);
 
+    public Map<String, Double> getPricing();
+
     public static Map<String,String> regionNames() {
         Map<String,String> regionNames = new HashMap<>();
         regionNames.put("ap-northeast-1","Asia Pacific (Tokyo)");

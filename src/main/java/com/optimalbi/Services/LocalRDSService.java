@@ -131,6 +131,10 @@ public class LocalRDSService extends AmazonService {
 
     }
 
+    public Map<String, Double> getPricing() {
+        return null;
+    }
+
     public String serviceType() {
         return "RDS";
     }

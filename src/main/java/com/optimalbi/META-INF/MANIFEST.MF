@@ -1,2 +1,2 @@
 Manifest-Version: 1.0
-Main-Class: com.optimalbi.GUI
+Main-Class: com.optimalbi.GUI.Main

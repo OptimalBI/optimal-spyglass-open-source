@@ -28,7 +28,7 @@ import com.optimalbi.SimpleLog.Logger;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.*;
-import com.optimalbi.TjfxFactory.TjfxFactory;
+import com.optimalbi.GUI.TjfxFactory.TjfxFactory;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -55,7 +55,7 @@ public class LocalEc2Service extends AmazonService implements Comparable<Service
     private final Region region;
     private Map<String, Double> pricing = null;
 
-    //Global GUI Components
+    //Global Main Components
     private Label instanceState;
     private Timer timer = new Timer();
 
@@ -318,6 +318,10 @@ public class LocalEc2Service extends AmazonService implements Comparable<Service
 
     public void attachPricing(Map<String, Double> pricing) {
         this.pricing = pricing;
+    }
+
+    public Map<String, Double> getPricing(){
+        return pricing;
     }
 
     private void addShutdownHook() {
