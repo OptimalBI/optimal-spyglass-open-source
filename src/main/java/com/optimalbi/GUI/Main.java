@@ -1,5 +1,4 @@
 package com.optimalbi.GUI;
-
 /*
    Copyright 2015 OptimalBI
 
@@ -15,7 +14,6 @@ package com.optimalbi.GUI;
    See the License for the specific language governing permissions and
    limitations under the License.
  */
-
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
@@ -23,10 +21,7 @@ import com.optimalbi.Controller.AmazonAccount;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
 import com.optimalbi.Controller.Containers.AmazonRegion;
 import com.optimalbi.Services.Service;
-import com.optimalbi.SimpleLog.EmptyLogger;
-import com.optimalbi.SimpleLog.FileLogger;
-import com.optimalbi.SimpleLog.GuiLogger;
-import com.optimalbi.SimpleLog.Logger;
+import org.timothygray.SimpleLog.*;
 import com.optimalbi.GUI.TjfxFactory.TjfxFactory;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -43,7 +38,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.*;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -60,8 +54,7 @@ import org.jasypt.encryption.pbe.config.SimplePBEConfig;
 import org.jasypt.properties.PropertyValueEncryptionUtils;
 import org.jasypt.util.password.BasicPasswordEncryptor;
 import org.jasypt.util.password.PasswordEncryptor;
-
-import java.awt.*;
+import java.awt.Desktop;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -80,7 +73,6 @@ public class Main extends Application {
     private static double applicationHeight;
     private static double applicationWidth;
     private static Stage mainStage;
-    private final boolean debugMode = false;
     //Gui Components
     private final double buttonWidth = 240;
     private final double buttonHeight = 60;
@@ -95,7 +87,6 @@ public class Main extends Application {
     private Map<String, TextField> fields;
     private Logger logger;
     private Popup dialog;
-    private TextArea debugOut = null;
     private TjfxFactory guiFactory;
     private ProgressBar progressBar = null;
     private List<AmazonCredentials> credentials;
@@ -141,16 +132,10 @@ public class Main extends Application {
     };
 
     private static void download(URL input, File output) throws IOException {
-        InputStream in = input.openStream();
-        try {
-            OutputStream out = new FileOutputStream(output);
-            try {
+        try (InputStream in = input.openStream()) {
+            try (OutputStream out = new FileOutputStream(output)) {
                 copy(in, out);
-            } finally {
-                out.close();
             }
-        } finally {
-            in.close();
         }
     }
 
@@ -191,8 +176,8 @@ public class Main extends Application {
 
         try {
             File logFile = new File("log.txt");
-            logFile.delete();
-            logFile.createNewFile();
+            if(!logFile.delete()) throw new IOException("Failed to delete log file");
+            if(!logFile.createNewFile()) throw new IOException("Failed to create log file");
             logger = new FileLogger(logFile);
         } catch (IOException e) {
             logger = new EmptyLogger();
@@ -498,24 +483,6 @@ public class Main extends Application {
         });
         guiComponents.add(update);
 
-        //Refresh Button - This button only redraws the Main
-        Button refresh = guiFactory.createButton("Refresh");
-        refresh.setAlignment(Pos.BASELINE_LEFT);
-        refresh.setOnAction(event -> {
-            logger.info("Refreshing");
-            border.setCenter(waitingCentre());
-            TimerTask task = new TimerTask() {
-                @Override
-                public void run() {
-                    Platform.runLater(Main.this::updatePainting);
-                }
-            };
-            timer.schedule(task, 200);
-        });
-        if (debugMode) {
-            guiComponents.add(refresh);
-        }
-
         //Manage credentials
         Button manageCredentials = guiFactory.createButton("Add/Remove credentials");
         manageCredentials.setAlignment(Pos.BASELINE_LEFT);
@@ -559,9 +526,6 @@ public class Main extends Application {
 
     private void changePassword() {
         ArrayList<Node> c = new ArrayList<>();
-
-        //Prompt text
-        Text prompt = new Text("Change password");
 
         //Old password combo box
         Label oldPswdLabel = new Label("Old password: ");

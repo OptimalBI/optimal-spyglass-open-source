@@ -54,13 +54,11 @@ Download the latest pre-build release from https://github.com/OptimalBI/optimal-
 * Provide CPU Util graph for Ec2 (maximum and median usage across six four-hour blocks per day, for the prior seven days)
 * Securing key is currently the responsibility of the user
 * Pricing based on supplied .csv files for ec2 (See root directory)
+    * The app will read the .csv file (EC2.Pricing.csv) and match the "EC2.NAME" to ec2 instance types.
+    * If it has one then the pricing from "Cost.Per.Hour" will be used to calculate cost.
+    * The app will not take OS or Spot/Reserved instances into consideration.
+    * It is the end users responsibility to keep the pricing up to date
 * Provide standard encryption to the Secret Keys via login password method
-```
-	The app will read the .csv file (EC2.Pricing.csv) and match the "EC2.NAME" to ec2 instance types.
-	If it has one then the pricing from "Cost.Per.Hour" will be used to calculate cost.
-	The app will not take OS or Spot/Reserved instances into consideration.
-	It is the end users responsibility to keep the pricing up to date
-```
 
 ## Planned functionality: ##
 * Scheduled start and stop for all services
@@ -120,5 +118,7 @@ Please submit these to GitHub issue tracking at https://github.com/OptimalBI/opt
 	v0.8
 	    * Update AWS library to 1.9.19
 	    * Changed font system to use Google Fonts so that the app is consistent across all OS's
+	    * Added SimpleLog with its proper path
+	    * Added javadocs and sources to pom build script
 
 ```

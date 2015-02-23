@@ -18,7 +18,7 @@ package com.optimalbi.Services;
 
 
 import com.optimalbi.Controller.Containers.AmazonCredentials;
-import com.optimalbi.SimpleLog.Logger;
+import org.timothygray.SimpleLog.*;
 import org.apache.commons.lang.Validate;
 
 /**

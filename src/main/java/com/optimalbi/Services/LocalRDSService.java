@@ -19,7 +19,7 @@ package com.optimalbi.Services;
 import com.amazonaws.regions.Region;
 import com.amazonaws.services.rds.model.DBInstance;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
-import com.optimalbi.SimpleLog.Logger;
+import org.timothygray.SimpleLog.*;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;

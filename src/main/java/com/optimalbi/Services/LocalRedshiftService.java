@@ -25,7 +25,7 @@ import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsRequest;
 import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsResult;
 import com.amazonaws.services.redshift.model.Cluster;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
-import com.optimalbi.SimpleLog.Logger;
+import org.timothygray.SimpleLog.*;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;

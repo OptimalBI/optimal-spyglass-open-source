@@ -32,7 +32,7 @@ import com.amazonaws.services.redshift.model.DescribeClustersResult;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
 import com.optimalbi.Services.Service;
 import com.optimalbi.Services.*;
-import com.optimalbi.SimpleLog.Logger;
+import org.timothygray.SimpleLog.*;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;

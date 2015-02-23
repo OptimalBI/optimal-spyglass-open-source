@@ -1,5 +1,4 @@
-package com.optimalbi.SimpleLog;
-
+package org.timothygray.SimpleLog;
 
 /*
    Copyright 2015 OptimalBI
@@ -18,28 +17,23 @@ package com.optimalbi.SimpleLog;
  */
 
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static java.util.Arrays.asList;
-
 /**
- * Created by Timothy Gray(timg) on 24/09/2014.
- * Version: 0.1.0
+ * Does nothing with log input, for null errors only.
  */
-public interface Logger {
+public class EmptyLogger implements Logger {
+    public void debug(String message) {
 
-    public static final List<logType> logTypesList = new ArrayList<>(asList(logType.DEBUG, logType.INFO, logType.WARN, logType.ERROR));
+    }
 
-    public void debug(String message);
+    public void warn(String message) {
 
-    public void warn(String message);
+    }
 
-    public void error(String message);
+    public void error(String message) {
 
-    public void info(String message);
+    }
 
-    public static enum logType {
-        DEBUG, INFO, WARN, ERROR
+    public void info(String message) {
+
     }
 }

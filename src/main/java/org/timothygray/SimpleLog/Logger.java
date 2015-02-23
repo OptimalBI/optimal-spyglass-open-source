@@ -1,4 +1,5 @@
-package com.optimalbi.SimpleLog;
+package org.timothygray.SimpleLog;
+
 
 /*
    Copyright 2015 OptimalBI
@@ -17,23 +18,27 @@ package com.optimalbi.SimpleLog;
  */
 
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static java.util.Arrays.asList;
+
 /**
- * Created by Timothy Gray(timg) on 27/11/2014.
+ * Interface for a very simple way of creating log output to GUI's and/or files
  */
-public class EmptyLogger implements Logger {
-    public void debug(String message) {
+public interface Logger {
 
-    }
+    public static final List<logType> logTypesList = new ArrayList<logType>(asList(logType.DEBUG, logType.INFO, logType.WARN, logType.ERROR));
 
-    public void warn(String message) {
+    public void debug(String message);
 
-    }
+    public void warn(String message);
 
-    public void error(String message) {
+    public void error(String message);
 
-    }
+    public void info(String message);
 
-    public void info(String message) {
-
+    public static enum logType {
+        DEBUG, INFO, WARN, ERROR
     }
 }
