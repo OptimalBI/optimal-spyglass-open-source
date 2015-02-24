@@ -17,7 +17,7 @@ package com.optimalbi.GUI;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
-import com.optimalbi.Controller.AmazonAccount;
+import com.optimalbi.AmazonAccount;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
 import com.optimalbi.Controller.Containers.AmazonRegion;
 import com.optimalbi.Services.Service;
