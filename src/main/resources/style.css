@@ -97,6 +97,12 @@
     -fx-background-color: #EEE;
 }
 
+.instanceName {
+    -fx-font-family: "Droid Sans";
+    -fx-font-size: 18px;
+    -fx-text-fill: black;
+}
+
 .instance: hover {
     -fx-border-color: #f7931e;
 }

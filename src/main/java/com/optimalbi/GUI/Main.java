@@ -14,22 +14,22 @@ package com.optimalbi.GUI;
    See the License for the specific language governing permissions and
    limitations under the License.
  */
+
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.optimalbi.AmazonAccount;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
 import com.optimalbi.Controller.Containers.AmazonRegion;
-import com.optimalbi.Services.Service;
-import org.timothygray.SimpleLog.*;
 import com.optimalbi.GUI.TjfxFactory.TjfxFactory;
+import com.optimalbi.Services.Service;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
+import javafx.event.*;
+import javafx.event.Event;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
@@ -54,7 +54,11 @@ import org.jasypt.encryption.pbe.config.SimplePBEConfig;
 import org.jasypt.properties.PropertyValueEncryptionUtils;
 import org.jasypt.util.password.BasicPasswordEncryptor;
 import org.jasypt.util.password.PasswordEncryptor;
-import java.awt.Desktop;
+import org.timothygray.SimpleLog.EmptyLogger;
+import org.timothygray.SimpleLog.FileLogger;
+import org.timothygray.SimpleLog.Logger;
+
+import java.awt.*;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -176,8 +180,8 @@ public class Main extends Application {
 
         try {
             File logFile = new File("log.txt");
-            if(!logFile.delete()) throw new IOException("Failed to delete log file");
-            if(!logFile.createNewFile()) throw new IOException("Failed to create log file");
+            if (!logFile.delete()) throw new IOException("Failed to delete log file");
+            if (!logFile.createNewFile()) throw new IOException("Failed to create log file");
             logger = new FileLogger(logFile);
         } catch (IOException e) {
             logger = new EmptyLogger();
@@ -609,13 +613,13 @@ public class Main extends Application {
         bottomLeft.setAlignment(Pos.BOTTOM_LEFT);
         bottomLeft.getStylesheets().add("style.css");
         bottomLeft.getStyleClass().add("botStyle");
-        bottomLeft.setPrefSize(applicationWidth/2, 20);
+        bottomLeft.setPrefSize(applicationWidth / 2, 20);
         bottomLeft.getChildren().add(cr);
         guiComponents.add(bottomLeft); //Add after debug output
 
         //Version Text
         HBox verTextBox = new HBox();
-        Label verText = new Label(String.format("Version: %d.%d.%d",curVer[0],curVer[1],curVer[2]));
+        Label verText = new Label(String.format("Version: %d.%d.%d", curVer[0], curVer[1], curVer[2]));
         verText.setMinWidth(320);
         verText.setTextFill(Color.WHITE);
         verText.setPrefWidth(320);
@@ -708,7 +712,7 @@ public class Main extends Application {
 
         //Version notification
         List<Integer> versi = getLatestVersionNumber();
-        logger.debug(String.format("Remote version: %d.%d.%d. Current version: %d.%d.%d.", versi.get(0), versi.get(1), versi.get(2),curVer[0],curVer[1],curVer[2]));
+        logger.debug(String.format("Remote version: %d.%d.%d. Current version: %d.%d.%d.", versi.get(0), versi.get(1), versi.get(2), curVer[0], curVer[1], curVer[2]));
         //Int varibles to clear my head
         int curMaj = curVer[0];
         int curMin = curVer[1];
@@ -871,19 +875,61 @@ public class Main extends Application {
 
     private void drawServiceBoxes(int instancesWide) {
    /*
-    * These loops create the section of the Main where it is divided by account, the first loop loops over all currently added AWS accounts
+    * These loops create the section of the GUI where it is divided by account, the first loop loops over all currently added AWS accounts
     * The second loop goes over the AWS controllers, checks if they belong to the current looping account and if so draws them in their rows
     * If the rows exceed instancesWide it starts a new row
     */
+        ServiceDraw draw = new ServiceDraw(styleSheet);
         VBox allInstances = new VBox();
 
         for (AmazonCredentials credential : credentials) {
+            int i = 0;
+
+            VBox thisAccount = new VBox();
+            Label accountLabel = new Label(credential.getAccountName());
+            accountLabel.getStyleClass().add("accountTitle");
+            thisAccount.getChildren().add(accountLabel);
+
             for (AmazonAccount account : accounts) {
                 if (account.getCredentials().getAccountName().equals(credential.getAccountName())) {
-
+                    List<Service> services = account.getServices();
+                    List<VBox> toDraw = draw.drawAccount(account);
+                    ArrayList<HBox> rows = new ArrayList<>();
+                    HBox currentRow = new HBox();
+                    for (VBox box : toDraw) {
+                        if (viewedRegion.equals("all")) {
+                            box.getStyleClass().add("instance");
+                            currentRow.getChildren().add(box);
+                            i++;
+                        } else {
+                            int index = toDraw.indexOf(box);
+                            if (index >= 0) {
+                                if (services.get(index).serviceRegion().getName().equals(viewedRegion)) {
+                                    box.getStyleClass().add("instance");
+                                    currentRow.getChildren().add(box);
+                                    i++;
+                                }
+                            }
+                        }
+                        if (i + 1 >= instancesWide) {
+                            rows.add(currentRow);
+                            currentRow = new HBox();
+                            i = 0;
+                        }
+                    }
+                    rows.add(currentRow);
+                    for (HBox row : rows) {
+                        row.getStylesheets().add(styleSheet);
+                        row.getStyleClass().add("instanceRows");
+                    }
+                    if (rows.size() > 0) {
+                        thisAccount.getChildren().addAll(rows);
+                        thisAccount.getStylesheets().add("style.css");
+                        thisAccount.getStyleClass().add("centreStyle");
+                    }
                 }
             }
-//            allInstances.getChildren().add(thisAccount);
+            allInstances.getChildren().add(thisAccount);
         }
 
         allInstances.getStylesheets().add(styleSheet);
@@ -898,7 +944,7 @@ public class Main extends Application {
             }
         });
 
-        //Makes sure this is applied on the main thread so the Main doesn't throw a fit
+        //Makes sure this is applied on the main thread so the GUI doesn't throw a fit
         Platform.runLater(() -> border.setCenter(scrollPane));
     }
 
