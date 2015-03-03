@@ -170,7 +170,6 @@ public class ServiceDraw {
         return accountServices.stream().map(this::drawOne).collect(Collectors.toList());
     }
 
-
     public Popup drawGraph(AmazonCredentials credentials, Service service, Scene mainScene) {
         Popup popup = new Popup();
 

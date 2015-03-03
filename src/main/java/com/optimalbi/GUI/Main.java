@@ -22,14 +22,15 @@ import com.optimalbi.AmazonAccount;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
 import com.optimalbi.Controller.Containers.AmazonRegion;
 import com.optimalbi.GUI.TjfxFactory.TjfxFactory;
+import com.optimalbi.ServicePricing;
 import com.optimalbi.Services.Service;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.event.*;
-import javafx.event.Event;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
@@ -83,9 +84,10 @@ public class Main extends Application {
     private final String styleSheet = "style.css";
     private final String googleSheet = "http://fonts.googleapis.com/css?family=Open+Sans";
     private final BorderPane border = new BorderPane();
-    //Amazon related variables
     private final File credentialsFile = new File("credentials");
     private final File settingsFile = new File("settings.cfg");
+    private final File pricingFile = new File("EC2.Pricing.csv");
+    private ServicePricing pricing = null;
     //Bounds of the application
     private Rectangle2D primaryScreenBounds;
     private Map<String, TextField> fields;
@@ -893,22 +895,30 @@ public class Main extends Application {
             for (AmazonAccount account : accounts) {
                 if (account.getCredentials().getAccountName().equals(credential.getAccountName())) {
                     List<Service> services = account.getServices();
-                    List<VBox> toDraw = draw.drawAccount(account);
                     ArrayList<HBox> rows = new ArrayList<>();
                     HBox currentRow = new HBox();
-                    for (VBox box : toDraw) {
+                    for (Service service : services) {
+                        VBox box = draw.drawOne(service);
+
+                        //Add graph button to box
+                        Button graph = guiFactory.createButton("Graphs","popupButtons",buttonWidth,10);
+                        graph.setOnAction(actionEvent->{
+                            resetDialog();
+                            dialog = draw.drawGraph(account.getCredentials(),service,mainStage.getScene());
+                            dialog.setAutoHide(true);
+                            dialog.show(mainStage);
+                        });
+                        box.getChildren().add(graph);
+
                         if (viewedRegion.equals("all")) {
                             box.getStyleClass().add("instance");
                             currentRow.getChildren().add(box);
                             i++;
                         } else {
-                            int index = toDraw.indexOf(box);
-                            if (index >= 0) {
-                                if (services.get(index).serviceRegion().getName().equals(viewedRegion)) {
+                                if (service.serviceRegion().getName().equals(viewedRegion)) {
                                     box.getStyleClass().add("instance");
                                     currentRow.getChildren().add(box);
                                     i++;
-                                }
                             }
                         }
                         if (i + 1 >= instancesWide) {
@@ -1154,10 +1164,16 @@ public class Main extends Application {
         totalAreas = credentials.size() * currentRegions.size() * 3;
         logger.debug("Total areas: " + totalAreas);
 
+
+        //Setup the pricing system
+        if (pricingFile.exists() && pricing == null) {
+            pricing = new ServicePricing(pricingFile, logger);
+        }
+
         accounts = new ArrayList<>();
         for (AmazonCredentials credential : credentials) {
             AmazonAccount thisController = new AmazonAccount(credential, currentRegions, logger);
-
+            thisController.attachPricing(pricing);
             thisController.getCompleted().addListener(new ChangeListener<Number>() {
                 @Override
                 public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
@@ -1515,7 +1531,7 @@ public class Main extends Application {
         HBox runningRedshiftBox = guiFactory.labelAndField("Running Redshift: ", "" + runningRedshift, textWidth, labelWidth, styleClass);
         c.add(runningRedshiftBox);
 
-        HBox runningCostsBox = guiFactory.labelAndField("Current Costs ($/hr): ", "$" + runningCosts, textWidth, labelWidth, styleClass);
+        HBox runningCostsBox = guiFactory.labelAndField("Running Costs ($/hr): ", "$" + runningCosts, textWidth, labelWidth, styleClass);
         c.add(runningCostsBox);
 
         List<Node> b = new ArrayList<>();
