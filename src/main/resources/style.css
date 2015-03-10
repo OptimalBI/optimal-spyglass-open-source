@@ -51,6 +51,13 @@
     -fx-background-color:#faa61a;
 }
 
+.tool-bar-overflow-button, .combo-box{
+    -fx-background-color:#faa61a;
+    -fx-spacing: 10;
+    -fx-padding: 8;
+    -fx-background-color:#faa61a;
+}
+
 .versionText{
     -fx-font-family: "Droid Sans";
     -fx-font-size: 16px;
@@ -139,6 +146,14 @@
     -fx-padding: 10;
     -fx-border-color: #FFCE71;
     -fx-background-color:#FFFFFF;
+}
+
+.toolbarLabel{
+    -fx-font-family: "Droid Sans";
+    -fx-font-size: 14px;
+    -fx-font-weight:bold;
+    -fx-text-fill: white;
+    -fx-padding: 5;
 }
 
 .subpopup{

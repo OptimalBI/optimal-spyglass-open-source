@@ -18,6 +18,12 @@ package com.optimalbi.GUI;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
+import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
+import com.amazonaws.services.cloudwatch.model.Datapoint;
+import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsRequest;
+import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsResult;
+import com.amazonaws.services.elasticloadbalancing.model.LBCookieStickinessPolicy;
 import com.optimalbi.AmazonAccount;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
 import com.optimalbi.Controller.Containers.AmazonRegion;
@@ -29,12 +35,19 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.concurrent.Task;
+import javafx.css.CssMetaData;
+import javafx.css.Styleable;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.*;
@@ -58,6 +71,7 @@ import org.jasypt.util.password.PasswordEncryptor;
 import org.timothygray.SimpleLog.EmptyLogger;
 import org.timothygray.SimpleLog.FileLogger;
 import org.timothygray.SimpleLog.Logger;
+import sun.rmi.runtime.Log;
 
 import java.awt.*;
 import java.io.*;
@@ -65,6 +79,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -86,7 +101,7 @@ public class Main extends Application {
     private final BorderPane border = new BorderPane();
     private final File credentialsFile = new File("credentials");
     private final File settingsFile = new File("settings.cfg");
-    private final File pricingFile = new File("EC2.Pricing.csv");
+    private final File pricingFile = new File("Pricing.csv");
     private ServicePricing pricing = null;
     //Bounds of the application
     private Rectangle2D primaryScreenBounds;
@@ -403,7 +418,7 @@ public class Main extends Application {
                     askForCredentials();
                 } else {
                     //Else go and populate the services with their controllers
-                    createControllers();
+                    createAccounts();
                 }
             }
         };
@@ -482,7 +497,7 @@ public class Main extends Application {
             TimerTask task = new TimerTask() {
                 @Override
                 public void run() {
-                    Platform.runLater(Main.this::createControllers);
+                    Platform.runLater(Main.this::createAccounts);
                 }
             };
             timer.schedule(task, 100);
@@ -811,7 +826,11 @@ public class Main extends Application {
     private ToolBar updateToolbar() {
         Map<String, String> regionNames = Service.regionNames();
 
-        List<Button> toolButtons = new ArrayList<>();
+        List<Node> toolButtons = new ArrayList<>();
+        Label allFilterLabel = new Label("View: ");
+        allFilterLabel.getStyleClass().add("toolbarLabel");
+        toolButtons.add(allFilterLabel);
+
         Button summary = guiFactory.createButton("Summary", -1, -1);
         summary.setOnAction(ActionEvent -> {
             viewedRegion = "summary";
@@ -825,6 +844,14 @@ public class Main extends Application {
             updatePainting();
         });
         toolButtons.add(all);
+
+        javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
+        spacer.setPrefWidth(20);
+        toolButtons.add(spacer);
+
+        Label regionLabel = new Label("Region Filter: ");
+        regionLabel.getStyleClass().add("toolbarLabel");
+        toolButtons.add(regionLabel);
 
         for (Region region : currentRegions) {
             Button adding;
@@ -868,19 +895,20 @@ public class Main extends Application {
             redrawHook = true;
         }
         if (!viewedRegion.equals("summary")) {
-            int instancesWide = (int) (mainStage.getWidth() / (Service.serviceWidth() + 20));
+            int instancesWide = (int) (mainStage.getWidth() / (ServiceDraw.serviceWidth + 20));
             drawServiceBoxes(instancesWide);
         } else {
             drawSummary();
         }
     }
 
+    /**
+     * These loops create the section of the GUI where it is divided by account, the first loop loops over all currently added AWS accounts
+     * The second loop goes over the AWS controllers, checks if they belong to the current looping account and if so draws them in their rows
+     * If the rows exceed instancesWide it starts a new row
+     */
     private void drawServiceBoxes(int instancesWide) {
-   /*
-    * These loops create the section of the GUI where it is divided by account, the first loop loops over all currently added AWS accounts
-    * The second loop goes over the AWS controllers, checks if they belong to the current looping account and if so draws them in their rows
-    * If the rows exceed instancesWide it starts a new row
-    */
+
         ServiceDraw draw = new ServiceDraw(styleSheet);
         VBox allInstances = new VBox();
 
@@ -900,25 +928,27 @@ public class Main extends Application {
                     for (Service service : services) {
                         VBox box = draw.drawOne(service);
 
-                        //Add graph button to box
-                        Button graph = guiFactory.createButton("Graphs","popupButtons",buttonWidth,10);
-                        graph.setOnAction(actionEvent->{
-                            resetDialog();
-                            dialog = draw.drawGraph(account.getCredentials(),service,mainStage.getScene());
-                            dialog.setAutoHide(true);
-                            dialog.show(mainStage);
-                        });
-                        box.getChildren().add(graph);
+                        if (service.serviceType().equalsIgnoreCase("ec2")) {
+                            //Add graph button to box
+                            Button graph = guiFactory.createButton("Graphs", "popupButtons", buttonWidth, 10);
+                            graph.setOnAction(actionEvent -> {
+                                resetDialog();
+                                dialog = drawGraph(account.getCredentials(), service, mainStage.getScene());
+                                dialog.setAutoHide(true);
+                                dialog.show(mainStage);
+                            });
+                            box.getChildren().add(graph);
+                        }
 
                         if (viewedRegion.equals("all")) {
                             box.getStyleClass().add("instance");
                             currentRow.getChildren().add(box);
                             i++;
                         } else {
-                                if (service.serviceRegion().getName().equals(viewedRegion)) {
-                                    box.getStyleClass().add("instance");
-                                    currentRow.getChildren().add(box);
-                                    i++;
+                            if (service.serviceRegion().getName().equals(viewedRegion)) {
+                                box.getStyleClass().add("instance");
+                                currentRow.getChildren().add(box);
+                                i++;
                             }
                         }
                         if (i + 1 >= instancesWide) {
@@ -1069,7 +1099,7 @@ public class Main extends Application {
         getAccessKeys();
         if (credentials != null) {
             try {
-                createControllers();
+                createAccounts();
             } catch (AmazonClientException e) {
                 logger.error("Failed to create credentials " + e.getMessage());
             }
@@ -1155,7 +1185,7 @@ public class Main extends Application {
         }
     }
 
-    private void createControllers() {
+    private void createAccounts() {
         currentRegions = new ArrayList<>();
         //If the region is currently marked as one we are interested in then add it to the current regions collection
         currentRegions.addAll(allRegions.stream().filter(AmazonRegion::getActive).map(AmazonRegion::getRegion).collect(Collectors.toList()));
@@ -1172,8 +1202,7 @@ public class Main extends Application {
 
         accounts = new ArrayList<>();
         for (AmazonCredentials credential : credentials) {
-            AmazonAccount thisController = new AmazonAccount(credential, currentRegions, logger);
-            thisController.attachPricing(pricing);
+            AmazonAccount thisController = new AmazonAccount(credential, currentRegions, logger, pricing);
             thisController.getCompleted().addListener(new ChangeListener<Number>() {
                 @Override
                 public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
@@ -1201,13 +1230,13 @@ public class Main extends Application {
             });
             accounts.add(thisController);
             //TODO: Figure out good way to describe the threading
-            TimerTask task = new TimerTask() {
-                @Override
-                public void run() {
+            Task task = new Task<Void>() {
+                protected Void call() throws Exception {
                     thisController.startConfigure();
+                    return null;
                 }
             };
-            timer.schedule(task, 2);
+            new Thread(task).start();
         }
     }
 
@@ -1330,7 +1359,7 @@ public class Main extends Application {
                 saveSettings();
                 viewedRegion = "all";
                 border.setCenter(waitingCentre());
-                createControllers();
+                createAccounts();
                 border.setTop(createTop());
             }
         });
@@ -1464,6 +1493,107 @@ public class Main extends Application {
         writeCredentials();
     }
 
+    public Popup drawGraph(AmazonCredentials credentials, Service service, Scene mainScene) {
+        Popup popup = new Popup();
+
+        //Time period for stats
+        long DAY_IN_MS = 1000 * 60 * 60 * 24;
+        Date end = new Date();
+        Date start = new Date(end.getTime() - (7 * DAY_IN_MS));
+
+        VBox outerLayout = new VBox();
+        outerLayout.setPrefSize(mainScene.getWindow().getWidth() / 1.12, mainScene.getWindow().getHeight() / 1.12);
+
+        CategoryAxis xAxis = new CategoryAxis();
+        NumberAxis yAxis = new NumberAxis();
+
+        yAxis.setLabel("Percent, %");
+        xAxis.setLabel("Date");
+
+        LineChart<String, Number> lineChart = new LineChart<>(xAxis, yAxis);
+
+        lineChart.setTitle(service.serviceName() + " Metrics");
+
+        XYChart.Series<String, Number> cpuUtilMax = new XYChart.Series<>();
+        cpuUtilMax.setName("CPU Utilization, Max");
+        XYChart.Series<String, Number> cpuUtilAve = new XYChart.Series<>();
+        cpuUtilAve.setName("CPU Utilization, Median");
+
+        //Request CPU Util stats
+        GetMetricStatisticsRequest cpuUtilizationRequest = new GetMetricStatisticsRequest();
+        cpuUtilizationRequest.setMetricName("CPUUtilization");
+        cpuUtilizationRequest.setEndTime(end);
+        cpuUtilizationRequest.setStartTime(start);
+        cpuUtilizationRequest.setNamespace("AWS/EC2");
+
+        //Request CPU Util stats
+        GetMetricStatisticsRequest diskUtilizationRequest = new GetMetricStatisticsRequest();
+        cpuUtilizationRequest.setMetricName("CPUUtilization");
+        cpuUtilizationRequest.setEndTime(end);
+        cpuUtilizationRequest.setStartTime(start);
+        cpuUtilizationRequest.setNamespace("AWS/EC2");
+
+        List<String> statistics = new ArrayList<>();
+        statistics.add("Maximum");
+        statistics.add("Average");
+        cpuUtilizationRequest.setStatistics(statistics);
+
+        List<com.amazonaws.services.cloudwatch.model.Dimension> dimensions = new ArrayList<>();
+        com.amazonaws.services.cloudwatch.model.Dimension instanceId = new com.amazonaws.services.cloudwatch.model.Dimension();
+        instanceId.setName("InstanceId");
+        instanceId.setValue(service.serviceID());
+        dimensions.add(instanceId);
+        cpuUtilizationRequest.setDimensions(dimensions);
+
+        cpuUtilizationRequest.setPeriod(86400 / 6); //Period in seconds
+
+        AmazonCloudWatch cloudWatch = new AmazonCloudWatchClient(credentials.getCredentials());
+        cloudWatch.setRegion(service.serviceRegion());
+
+        GetMetricStatisticsResult metricResult = cloudWatch.getMetricStatistics(cpuUtilizationRequest);
+
+        List<Datapoint> data = metricResult.getDatapoints();
+        Collections.sort(data, new Comparator<Datapoint>() {
+            @Override
+            public int compare(Datapoint o1, Datapoint o2) {
+                if (o1.getTimestamp().equals(o2.getTimestamp())) return 0;
+                else if (o1.getTimestamp().before(o2.getTimestamp())) return -1;
+                else return 1;
+            }
+        });
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm a, MMM d");
+        for (Datapoint da : data) {
+            cpuUtilMax.getData().add(new XYChart.Data<>(dateFormat.format(da.getTimestamp()), da.getMaximum()));
+            cpuUtilAve.getData().add(new XYChart.Data<>(dateFormat.format(da.getTimestamp()), da.getAverage()));
+        }
+
+
+        //noinspection unchecked
+        lineChart.getData().addAll(cpuUtilMax, cpuUtilAve);
+        lineChart.setPrefSize(outerLayout.getPrefWidth(), outerLayout.getPrefHeight());
+
+        //Buttons
+        HBox buttons = new HBox();
+        buttons.setPrefWidth(outerLayout.getPrefWidth());
+        //Close
+        Button close = new Button("Close");
+        close.setAlignment(Pos.BOTTOM_RIGHT);
+        close.setOnAction(event -> {
+            popup.hide();
+            resetDialog();
+        });
+        buttons.getChildren().add(close);
+        buttons.setAlignment(Pos.BOTTOM_RIGHT);
+
+        outerLayout.getChildren().addAll(lineChart, buttons);
+        outerLayout.getStylesheets().add("style.css");
+        outerLayout.getStyleClass().add("popup");
+
+        popup.getContent().add(outerLayout);
+        return popup;
+    }
+
     private void drawSummary() {
         int statisticsBoxWidth = 320;
         int labelWidth = 70;
@@ -1476,7 +1606,6 @@ public class Main extends Application {
         summaryStats.setMinWidth(statisticsBoxWidth);
 
         String styleClass = "statisticsTitle";
-
 
         List<Node> c = new ArrayList<>();
 
@@ -1511,8 +1640,8 @@ public class Main extends Application {
                 runningRDS = runningRDS + thisRC.get("rds");
                 runningRedshift = runningRedshift + thisRC.get("redshift");
                 for (Service service : account.getServices()) {
-                    if (service.serviceType().equalsIgnoreCase("ec2") && service.serviceState().equalsIgnoreCase("running")) {
-                        runningCosts = runningCosts + service.servicePrice();
+                    if (Service.runningTitles().contains(service.serviceState())) {
+                        runningCosts += service.servicePrice();
                     }
                 }
             }
@@ -1555,7 +1684,7 @@ public class Main extends Application {
                 thisRunningRedshift = thisRunningRedshift + thisRC.get("redshift");
 
                 for (Service service : account.getServices()) {
-                    if (service.serviceType().equalsIgnoreCase("ec2") && service.serviceState().equalsIgnoreCase("running")) {
+                    if (Service.runningTitles().contains(service.serviceState())) {
                         thisRunningCosts = thisRunningCosts + service.servicePrice();
                     }
                 }

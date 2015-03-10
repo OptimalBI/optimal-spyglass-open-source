@@ -23,7 +23,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk</artifactId>
-            <version>1.9.19</version>
+            <version>1.9.23</version>
         </dependency>
         <dependency>
             <groupId>org.jasypt</groupId>
@@ -43,7 +43,7 @@
         <dependency>
             <groupId>com.optimalbi</groupId>
             <artifactId>OptimalSpyglassLibrary</artifactId>
-            <version>0.1.1-SNAPSHOT</version>
+            <version>0.1.1</version>
         </dependency>
     </dependencies>
     <build>
