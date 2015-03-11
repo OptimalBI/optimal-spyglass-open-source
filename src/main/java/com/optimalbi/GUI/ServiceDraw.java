@@ -1,35 +1,18 @@
 package com.optimalbi.GUI;
 
-import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
-import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
-import com.amazonaws.services.cloudwatch.model.Datapoint;
-import com.amazonaws.services.cloudwatch.model.Dimension;
-import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsRequest;
-import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsResult;
 import com.optimalbi.AmazonAccount;
-import com.optimalbi.Controller.Containers.AmazonCredentials;
-import com.optimalbi.GUI.TjfxFactory.TjfxFactory;
 import com.optimalbi.Services.Service;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.Scene;
-import javafx.scene.chart.CategoryAxis;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.XYChart;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.stage.Popup;
 
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -49,13 +32,14 @@ public class ServiceDraw {
         this.stylesheet = stylesheet;
     }
 
-    public VBox drawOne(Service service){
-        if(service.serviceType().equalsIgnoreCase("ec2")){
+    public VBox drawOne(Service service) {
+        if (service.serviceType().equalsIgnoreCase("ec2")) {
             return drawEc2(service);
-        } else if (service.serviceType().equalsIgnoreCase("rds")){
+        } else if (service.serviceType().equalsIgnoreCase("rds")) {
             return drawRDS(service);
-        } else if (service.serviceType().equalsIgnoreCase("redshift")){
+        } else if (service.serviceType().equalsIgnoreCase("redshift")) {
             return drawRedshift(service);
+
         } else {
             return drawGeneric(service);
         }
@@ -64,17 +48,23 @@ public class ServiceDraw {
     private VBox drawGeneric(Service service) {
         VBox drawing = new VBox();
 
-        Pos align = Pos.CENTER;
-
         List<Node> c = new ArrayList<>();
 
         //Instance Type
         Label instanceType = new Label(stringCap(service.serviceType()));
-        switch(service.serviceType()){
-            case "RDS" : instanceType.getStyleClass().add("rdsTitle"); break;
-            case "ec2" : instanceType.getStyleClass().add("ec2Title"); break;
-            case "Redshift" : instanceType.getStyleClass().add("redshiftTitle"); break;
-            default:instanceType.getStyleClass().add("statisticsTitle"); break;
+        switch (service.serviceType()) {
+            case "RDS":
+                instanceType.getStyleClass().add("rdsTitle");
+                break;
+            case "ec2":
+                instanceType.getStyleClass().add("ec2Title");
+                break;
+            case "Redshift":
+                instanceType.getStyleClass().add("redshiftTitle");
+                break;
+            default:
+                instanceType.getStyleClass().add("statisticsTitle");
+                break;
         }
         instanceType.setAlignment(Pos.CENTER);
         instanceType.setPrefWidth(serviceWidth);
@@ -132,11 +122,19 @@ public class ServiceDraw {
 
         //Instance Type
         Label instanceType = new Label(stringCap(service.serviceType()));
-        switch(service.serviceType()){
-            case "RDS" : instanceType.getStyleClass().add("rdsTitle"); break;
-            case "ec2" : instanceType.getStyleClass().add("ec2Title"); break;
-            case "Redshift" : instanceType.getStyleClass().add("redshiftTitle"); break;
-            default:instanceType.getStyleClass().add("statisticsTitle"); break;
+        switch (service.serviceType()) {
+            case "RDS":
+                instanceType.getStyleClass().add("rdsTitle");
+                break;
+            case "ec2":
+                instanceType.getStyleClass().add("ec2Title");
+                break;
+            case "Redshift":
+                instanceType.getStyleClass().add("redshiftTitle");
+                break;
+            default:
+                instanceType.getStyleClass().add("statisticsTitle");
+                break;
         }
         instanceType.setAlignment(Pos.CENTER);
         instanceType.setPrefWidth(serviceWidth);
@@ -252,11 +250,19 @@ public class ServiceDraw {
 
         //Instance Type
         Label instanceType = new Label(stringCap(service.serviceType()));
-        switch(service.serviceType()){
-            case "RDS" : instanceType.getStyleClass().add("rdsTitle"); break;
-            case "ec2" : instanceType.getStyleClass().add("ec2Title"); break;
-            case "Redshift" : instanceType.getStyleClass().add("redshiftTitle"); break;
-            default:instanceType.getStyleClass().add("statisticsTitle"); break;
+        switch (service.serviceType()) {
+            case "RDS":
+                instanceType.getStyleClass().add("rdsTitle");
+                break;
+            case "ec2":
+                instanceType.getStyleClass().add("ec2Title");
+                break;
+            case "Redshift":
+                instanceType.getStyleClass().add("redshiftTitle");
+                break;
+            default:
+                instanceType.getStyleClass().add("statisticsTitle");
+                break;
         }
         instanceType.setAlignment(Pos.CENTER);
         instanceType.setPrefWidth(serviceWidth);
@@ -372,11 +378,19 @@ public class ServiceDraw {
 
         //Instance Type
         Label instanceType = new Label(stringCap(service.serviceType()));
-        switch(service.serviceType()){
-            case "RDS" : instanceType.getStyleClass().add("rdsTitle"); break;
-            case "ec2" : instanceType.getStyleClass().add("ec2Title"); break;
-            case "Redshift" : instanceType.getStyleClass().add("redshiftTitle"); break;
-            default:instanceType.getStyleClass().add("statisticsTitle"); break;
+        switch (service.serviceType()) {
+            case "RDS":
+                instanceType.getStyleClass().add("rdsTitle");
+                break;
+            case "ec2":
+                instanceType.getStyleClass().add("ec2Title");
+                break;
+            case "Redshift":
+                instanceType.getStyleClass().add("redshiftTitle");
+                break;
+            default:
+                instanceType.getStyleClass().add("statisticsTitle");
+                break;
         }
         instanceType.setAlignment(Pos.CENTER);
         instanceType.setPrefWidth(serviceWidth);

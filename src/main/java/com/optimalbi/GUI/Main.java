@@ -23,7 +23,6 @@ import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
 import com.amazonaws.services.cloudwatch.model.Datapoint;
 import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsRequest;
 import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsResult;
-import com.amazonaws.services.elasticloadbalancing.model.LBCookieStickinessPolicy;
 import com.optimalbi.AmazonAccount;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
 import com.optimalbi.Controller.Containers.AmazonRegion;
@@ -36,8 +35,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
-import javafx.css.CssMetaData;
-import javafx.css.Styleable;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -71,7 +68,6 @@ import org.jasypt.util.password.PasswordEncryptor;
 import org.timothygray.SimpleLog.EmptyLogger;
 import org.timothygray.SimpleLog.FileLogger;
 import org.timothygray.SimpleLog.Logger;
-import sun.rmi.runtime.Log;
 
 import java.awt.*;
 import java.io.*;
@@ -171,7 +167,7 @@ public class Main extends Application {
         }
     }
 
-    public static void openWebpage(URI uri) {
+    private static void openWebpage(URI uri) {
         Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
         if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {
             try {
@@ -192,15 +188,16 @@ public class Main extends Application {
         encryptor = new StandardPBEStringEncryptor();
         encryptor.setConfig(simplePBEConfig);
 
-        //Setup the timer that is used to trigger threaded events
+        //Setup the timer that is used to trigger the redraw event
         timer = new Timer();
 
         try {
             File logFile = new File("log.txt");
-            if (!logFile.delete()) throw new IOException("Failed to delete log file");
+            logFile.delete();
             if (!logFile.createNewFile()) throw new IOException("Failed to create log file");
             logger = new FileLogger(logFile);
         } catch (IOException e) {
+            System.err.print("Failed to create logFile: " + e.getLocalizedMessage());
             logger = new EmptyLogger();
         }
 
@@ -463,16 +460,6 @@ public class Main extends Application {
     private void addShutdownHook() {
         //Fixes a bug with the windows crashing on exit when using the OS close button
         mainStage.setOnCloseRequest(event -> System.exit(0));
-//        Runtime.getRuntime().addShutdownHook(new Thread() {
-//            @Override
-//            public void run() {
-//                System.out.println("Shutdown hook!");
-//                if (timer != null) {
-//                    timer.cancel();
-//                }
-//                System.exit(0);
-//            }
-//        });
     }
 
     private VBox createLeft() {
@@ -494,14 +481,9 @@ public class Main extends Application {
         update.setAlignment(Pos.BASELINE_LEFT);
         update.setOnAction(ActionEvent -> {
             border.setCenter(waitingCentre());
-            TimerTask task = new TimerTask() {
-                @Override
-                public void run() {
-                    Platform.runLater(Main.this::createAccounts);
-                }
-            };
-            timer.schedule(task, 100);
+            Platform.runLater(Main.this::createAccounts);
         });
+
         guiComponents.add(update);
 
         //Manage credentials
@@ -870,6 +852,7 @@ public class Main extends Application {
         ToolBar toolBar = new ToolBar();
         toolBar.getItems().addAll(toolButtons);
         toolBar.getStylesheets().add(styleSheet);
+
         toolBar.getStyleClass().add("toolbar");
         toolBar.setPrefWidth(primaryScreenBounds.getWidth());
         //If you click on the top and their is a dialog to show, display the dialog
@@ -884,14 +867,15 @@ public class Main extends Application {
     private void updatePainting() {
         if (!redrawHook) {
             //The first time we draw, hook the redraw listener to the changes in the Main's size
-            TimerTask task = new TimerTask() {
+            Task task = new Task<Void>() {
                 @Override
-                public void run() {
+                protected Void call() throws Exception {
                     mainStage.widthProperty().addListener(paintListener);
                     mainStage.heightProperty().addListener(paintListener);
+                    return null;
                 }
             };
-            timer.schedule(task, 50);
+            new Thread(task).start();
             redrawHook = true;
         }
         if (!viewedRegion.equals("summary")) {
@@ -1493,7 +1477,7 @@ public class Main extends Application {
         writeCredentials();
     }
 
-    public Popup drawGraph(AmazonCredentials credentials, Service service, Scene mainScene) {
+    private Popup drawGraph(AmazonCredentials credentials, Service service, Scene mainScene) {
         Popup popup = new Popup();
 
         //Time period for stats
@@ -1521,13 +1505,6 @@ public class Main extends Application {
 
         //Request CPU Util stats
         GetMetricStatisticsRequest cpuUtilizationRequest = new GetMetricStatisticsRequest();
-        cpuUtilizationRequest.setMetricName("CPUUtilization");
-        cpuUtilizationRequest.setEndTime(end);
-        cpuUtilizationRequest.setStartTime(start);
-        cpuUtilizationRequest.setNamespace("AWS/EC2");
-
-        //Request CPU Util stats
-        GetMetricStatisticsRequest diskUtilizationRequest = new GetMetricStatisticsRequest();
         cpuUtilizationRequest.setMetricName("CPUUtilization");
         cpuUtilizationRequest.setEndTime(end);
         cpuUtilizationRequest.setStartTime(start);
