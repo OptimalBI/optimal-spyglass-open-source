@@ -11,6 +11,7 @@ package com.optimalbi.GUI;
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
  */
@@ -81,8 +82,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Created by Timothy Gray on 30/10/2014.
- * Version 2.0
+ * The main GUI controller and GUI logic for OptimalSpyglass. Includes encryption and connection/file connection/
+ *
+ * @author Timothy Gray
  */
 public class Main extends Application {
     private static final int[] curVer = {0, 8, 0};
@@ -93,7 +95,6 @@ public class Main extends Application {
     private final double buttonWidth = 240;
     private final double buttonHeight = 60;
     private final String styleSheet = "style.css";
-    private final String googleSheet = "http://fonts.googleapis.com/css?family=Open+Sans";
     private final BorderPane border = new BorderPane();
     private final File credentialsFile = new File("credentials");
     private final File settingsFile = new File("settings.cfg");
@@ -124,8 +125,8 @@ public class Main extends Application {
     private Timer timer;
     private final ChangeListener<Number> paintListener = new ChangeListener<Number>() {
         /*
-            Creates a delayed draw event which will create a new thread and wait for delayTime number of seconds
-            before redrawing the centre and top of the app.
+         *   Creates a delayed draw event which will create a new thread and wait for delayTime number of seconds
+         *   before redrawing the centre and top of the app.
          */
         @Override
         public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
@@ -207,7 +208,6 @@ public class Main extends Application {
         applicationHeight = primaryScreenBounds.getHeight() / 1.11;
         applicationWidth = primaryScreenBounds.getWidth() / 1.11;
         guiFactory = new TjfxFactory(buttonWidth, buttonHeight, styleSheet);
-        border.getStylesheets().add(googleSheet);
         createGUI();
 
         //TODO: Add icon image;
@@ -224,10 +224,7 @@ public class Main extends Application {
                 }
             }
         });
-//        mainStage.setMaximized(true);
 
-
-        //Setup the logger with attachment to the Main, if it fails only use the logger to the console
         logger.info("Hello chaps");
 
         //Process the settings file
@@ -397,7 +394,7 @@ public class Main extends Application {
         buttonBox.setAlignment(Pos.BOTTOM_RIGHT);
         c.add(buttonBox);
 
-        EventHandler finishEvent = event -> {
+        EventHandler<ActionEvent> finishEvent = event -> {
             if (passwordField.getText().equals("")) {
                 askForPassword("Please enter a valid password", 0);
             } else if (!matchPassword(passwordField.getText())) {
@@ -557,7 +554,7 @@ public class Main extends Application {
         buttons.getStyleClass().add("subpopup");
         c.add(buttons);
 
-        EventHandler goEvent = event -> {
+        EventHandler<ActionEvent> goEvent = event -> {
             if (oldPswdField.getText().equals(decryptedPassword)) {
                 decryptedPassword = newPswdField.getText();
 
@@ -666,10 +663,6 @@ public class Main extends Application {
             }
         });
         return layout;
-    }
-
-    private void setLabelCentre(String label) {
-        Platform.runLater(() -> border.setCenter(labelCentre(label)));
     }
 
     private VBox labelCentre(String label) {
@@ -791,8 +784,7 @@ public class Main extends Application {
                 vers.set(1, Integer.parseInt(split[1]));
                 vers.set(2, Integer.parseInt(split[2]));
             } catch (IOException e) {
-                logger.error("Failed to read settings file: " + e.getMessage());
-                setLabelCentre("Failed to read settings file: " + e.getMessage());
+                logger.error("Failed to save version file: " + e.getMessage());
             }
             versionTemp.delete();
             return vers;
@@ -828,7 +820,7 @@ public class Main extends Application {
         toolButtons.add(all);
 
         javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
-        spacer.setPrefWidth(20);
+        spacer.setPrefWidth(18);
         toolButtons.add(spacer);
 
         Label regionLabel = new Label("Region Filter: ");
@@ -890,6 +882,7 @@ public class Main extends Application {
      * These loops create the section of the GUI where it is divided by account, the first loop loops over all currently added AWS accounts
      * The second loop goes over the AWS controllers, checks if they belong to the current looping account and if so draws them in their rows
      * If the rows exceed instancesWide it starts a new row
+     * @param instancesWide The number of instances to draw in each row.
      */
     private void drawServiceBoxes(int instancesWide) {
 
@@ -961,6 +954,7 @@ public class Main extends Application {
 
         //Adds them to a scroll pane so if the window is too small we can scroll!
         ScrollPane scrollPane = new ScrollPane(allInstances);
+        scrollPane.setPannable(true);
         scrollPane.getStylesheets().add(styleSheet);
         scrollPane.setOnMouseClicked(event -> {
             if (dialog != null) {
@@ -1158,7 +1152,7 @@ public class Main extends Application {
             }
         } catch (IOException e) {
             logger.error("Failed to read credentials file: " + e.getMessage());
-            setLabelCentre("Failed to read credentials file: " + e.getMessage());
+            Platform.runLater(() -> border.setCenter(labelCentre("Failed to read credentials file: " + e.getMessage())));
         }
         credentials = new ArrayList<>();
         for (int i = 0; i != accountNames.size(); i++) {
@@ -1448,7 +1442,7 @@ public class Main extends Application {
             }
         } catch (IOException e) {
             logger.error("Failed to read settings file: " + e.getMessage());
-            setLabelCentre("Failed to read settings file: " + e.getMessage());
+            Platform.runLater(() -> border.setCenter(labelCentre("Failed to read settings file: " + e.getMessage())));
         }
         Regions[] regionses = Regions.values();
         for (Regions re : regionses) {
@@ -1643,7 +1637,6 @@ public class Main extends Application {
         List<Node> b = new ArrayList<>();
 
         summaryStats.getChildren().addAll(c);
-        summaryStats.getStylesheets().add(googleSheet);
         summaryStats.getStylesheets().add(styleSheet);
         summaryStats.getStyleClass().add("centreStyle");
         b.add(summaryStats);
