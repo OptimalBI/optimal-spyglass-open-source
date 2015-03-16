@@ -142,6 +142,10 @@ public class Main extends Application {
                         Platform.runLater(() -> border.setTop(createTop()));
                         Platform.runLater(() -> border.setBottom(createBottom()));
                         Platform.runLater(() -> border.setLeft(createLeft()));
+                        if(dialog != null) {
+                            dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
+                            dialog.setY(mainStage.getY() + mainStage.getHeight() / 2 - dialog.getHeight() / 2);
+                        }
                     }
                 };
                 timer.schedule(task, delayTime);
@@ -216,14 +220,7 @@ public class Main extends Application {
         mainStage.show();
 
         //If the mainStage becomes focused redraw the hidden popup
-        mainStage.focusedProperty().addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                if (!oldValue && dialog != null) {
-                    dialog.show(mainStage);
-                }
-            }
-        });
+        mainStage.focusedProperty().addListener(dialogChangeListener());
 
         logger.info("Hello chaps");
 
@@ -231,15 +228,7 @@ public class Main extends Application {
         loadSettings();
 
         border.setTop(createTop());
-        border.setCenter(waitingCentre());
-        border.focusedProperty().addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                if (!oldValue && dialog != null) {
-                    dialog.show(mainStage);
-                }
-            }
-        });
+        border.focusedProperty().addListener(dialogChangeListener());
 
         //Load access keys from file, if they don't exist ask for them
         //TODO: check if keys are valid on load
@@ -248,6 +237,16 @@ public class Main extends Application {
         } else {
             askForPassword("Please enter password", 0);
         }
+    }
+
+    private ChangeListener<Boolean> dialogChangeListener() {
+        return (observable, oldValue, newValue) -> {
+            if (!oldValue && dialog != null) {
+                dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
+                dialog.setY(mainStage.getY() + mainStage.getHeight() / 2 - dialog.getHeight() / 2);
+                dialog.show(mainStage);
+            }
+        };
     }
 
     private void newPassword(String failedMessage) {
@@ -328,7 +327,6 @@ public class Main extends Application {
         layout.getStyleClass().add("popup");
 
         dialog = guiFactory.setupDialog(applicationWidth / 3.2, applicationHeight / 2, layout);
-        border.setCenter(waitingCentre());
         dialog.show(mainStage);
         dialog.setAutoHide(true);
     }
@@ -424,7 +422,6 @@ public class Main extends Application {
         layout.getStyleClass().add("popup");
         layout.getStylesheets().add(styleSheet);
         layout.setAlignment(Pos.TOP_LEFT);
-        border.setCenter(waitingCentre());
 
         resetDialog();
         dialog = guiFactory.setupDialog(applicationWidth / 2, applicationHeight / 2, layout);
@@ -441,7 +438,6 @@ public class Main extends Application {
 
     private void createGUI() {
         //Create the gui sections
-        border.setCenter(waitingCentre());
         border.setLeft(createLeft());
         border.setBottom(createBottom());
         border.setTop(createTop());
@@ -477,7 +473,6 @@ public class Main extends Application {
         Button update = guiFactory.createButton("Update");
         update.setAlignment(Pos.BASELINE_LEFT);
         update.setOnAction(ActionEvent -> {
-            border.setCenter(waitingCentre());
             Platform.runLater(Main.this::createAccounts);
         });
 
@@ -1071,7 +1066,6 @@ public class Main extends Application {
             dialog = null;
             fields = null;
         }
-        Platform.runLater(() -> border.setCenter(Main.this.waitingCentre()));
 
         //After saving to file reload the credentials into memory to prevent duplicates
         getAccessKeys();
@@ -1164,6 +1158,7 @@ public class Main extends Application {
     }
 
     private void createAccounts() {
+        border.setCenter(waitingCentre());
         currentRegions = new ArrayList<>();
         //If the region is currently marked as one we are interested in then add it to the current regions collection
         currentRegions.addAll(allRegions.stream().filter(AmazonRegion::getActive).map(AmazonRegion::getRegion).collect(Collectors.toList()));
@@ -1228,13 +1223,14 @@ public class Main extends Application {
         VBox allCredentials = new VBox();
         allCredentials.setPrefWidth(primaryScreenBounds.getWidth() / 3);
 
-        double textWidth = 270;
+        double textWidth = 350;
 
         for (AmazonCredentials credential : credentials) {
             Pos alignment = Pos.CENTER_LEFT;
 
             //Account label
             Label label = new Label("Account Name: ");
+            label.minWidth(textWidth);
             label.getStyleClass().add("textLabel");
 
             //Account name
