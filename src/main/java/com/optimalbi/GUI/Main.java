@@ -53,6 +53,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -72,6 +73,8 @@ import org.timothygray.SimpleLog.Logger;
 
 import java.awt.*;
 import java.io.*;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -91,6 +94,8 @@ public class Main extends Application {
     private static double applicationHeight;
     private static double applicationWidth;
     private static Stage mainStage;
+    private Stage secondStage;
+
     //Gui Components
     private final double buttonWidth = 240;
     private final double buttonHeight = 60;
@@ -105,6 +110,7 @@ public class Main extends Application {
     private Map<String, TextField> fields;
     private Logger logger;
     private Popup dialog;
+
     private TjfxFactory guiFactory;
     private ProgressBar progressBar = null;
     private List<AmazonCredentials> credentials;
@@ -123,6 +129,31 @@ public class Main extends Application {
     @SuppressWarnings("FieldCanBeLocal")
     private String viewedRegion = "summary";
     private Timer timer;
+
+    private final ChangeListener<Boolean> dialogChangeListener = new ChangeListener<Boolean>() {
+        @Override
+        public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+            if(newValue) {
+                if(dialog!=null) {
+                    dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
+                    dialog.setY(mainStage.getY() + mainStage.getHeight() / 2.75 - dialog.getHeight() / 2);
+                    dialog.show(mainStage);
+                }
+            }
+        }
+    };
+
+    private final EventHandler<MouseEvent> dialogClicker = new EventHandler<MouseEvent>() {
+        @Override
+        public void handle(MouseEvent event) {
+            if(dialog!=null) {
+                dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
+                dialog.setY(mainStage.getY() + mainStage.getHeight() / 2.75 - dialog.getHeight() / 2);
+                dialog.show(mainStage);
+            }
+        }
+    };
+
     private final ChangeListener<Number> paintListener = new ChangeListener<Number>() {
         /*
          *   Creates a delayed draw event which will create a new thread and wait for delayTime number of seconds
@@ -138,20 +169,27 @@ public class Main extends Application {
                         primaryScreenBounds = Screen.getPrimary().getVisualBounds();
                         applicationHeight = mainStage.getHeight();
                         applicationWidth = mainStage.getWidth();
+                        dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
+                        dialog.setY(mainStage.getY() + mainStage.getHeight() / 2.75 - dialog.getHeight() / 2);
+                        dialog.show(mainStage);
                         Platform.runLater(Main.this::updatePainting);
                         Platform.runLater(() -> border.setTop(createTop()));
                         Platform.runLater(() -> border.setBottom(createBottom()));
                         Platform.runLater(() -> border.setLeft(createLeft()));
-                        if(dialog != null) {
-                            dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
-                            dialog.setY(mainStage.getY() + mainStage.getHeight() / 2 - dialog.getHeight() / 2);
-                        }
                     }
                 };
                 timer.schedule(task, delayTime);
             }
         }
     };
+
+    public static double round(double value, int places) {
+        if (places < 0) throw new IllegalArgumentException();
+
+        BigDecimal bd = new BigDecimal(value);
+        bd = bd.setScale(places, RoundingMode.HALF_UP);
+        return bd.doubleValue();
+    }
 
     private static void download(URL input, File output) throws IOException {
         try (InputStream in = input.openStream()) {
@@ -220,7 +258,7 @@ public class Main extends Application {
         mainStage.show();
 
         //If the mainStage becomes focused redraw the hidden popup
-        mainStage.focusedProperty().addListener(dialogChangeListener());
+        mainStage.focusedProperty().addListener(dialogChangeListener);
 
         logger.info("Hello chaps");
 
@@ -228,7 +266,7 @@ public class Main extends Application {
         loadSettings();
 
         border.setTop(createTop());
-        border.focusedProperty().addListener(dialogChangeListener());
+        border.focusedProperty().addListener(dialogChangeListener);
 
         //Load access keys from file, if they don't exist ask for them
         //TODO: check if keys are valid on load
@@ -237,16 +275,6 @@ public class Main extends Application {
         } else {
             askForPassword("Please enter password", 0);
         }
-    }
-
-    private ChangeListener<Boolean> dialogChangeListener() {
-        return (observable, oldValue, newValue) -> {
-            if (!oldValue && dialog != null) {
-                dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
-                dialog.setY(mainStage.getY() + mainStage.getHeight() / 2 - dialog.getHeight() / 2);
-                dialog.show(mainStage);
-            }
-        };
     }
 
     private void newPassword(String failedMessage) {
@@ -327,6 +355,8 @@ public class Main extends Application {
         layout.getStyleClass().add("popup");
 
         dialog = guiFactory.setupDialog(applicationWidth / 3.2, applicationHeight / 2, layout);
+        dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
+        dialog.setY(mainStage.getY() + mainStage.getHeight() / 2 - dialog.getHeight() / 2);
         dialog.show(mainStage);
         dialog.setAutoHide(true);
     }
@@ -441,6 +471,10 @@ public class Main extends Application {
         border.setLeft(createLeft());
         border.setBottom(createBottom());
         border.setTop(createTop());
+        VBox centrePlaceHolder = new VBox();
+        centrePlaceHolder.setPrefSize(applicationWidth, applicationHeight);
+        centrePlaceHolder.setOnMouseClicked(dialogClicker);
+        border.setCenter(centrePlaceHolder);
 
         //Add gui sections to the stage
         Scene scene = new Scene(border, applicationWidth, applicationHeight);
@@ -511,11 +545,7 @@ public class Main extends Application {
         layout.setPrefHeight(applicationHeight);
         layout.getStylesheets().add("style.css");
         layout.getStyleClass().add("leftStyle");
-        layout.setOnMouseClicked(event -> {
-            if (dialog != null) {
-                dialog.show(mainStage);
-            }
-        });
+        layout.setOnMouseClicked(dialogClicker);
         return layout;
     }
 
@@ -627,11 +657,7 @@ public class Main extends Application {
         layout.getStyleClass().add("otherBotStyle");
         layout.setPrefSize(applicationWidth, 20);
         layout.setAlignment(Pos.BOTTOM_LEFT);
-        layout.setOnMouseClicked(event -> {
-            if (dialog != null) {
-                dialog.show(mainStage);
-            }
-        });
+        layout.setOnMouseClicked(dialogClicker);
         return layout;
     }
 
@@ -652,11 +678,7 @@ public class Main extends Application {
         layout.setPrefHeight(applicationHeight / 2);
         layout.getStylesheets().add("style.css");
         layout.getStyleClass().add("centreStyle");
-        layout.setOnMouseClicked(event -> {
-            if (dialog != null) {
-                dialog.show(mainStage);
-            }
-        });
+        layout.setOnMouseClicked(dialogClicker);
         return layout;
     }
 
@@ -751,11 +773,7 @@ public class Main extends Application {
         VBox outline = new VBox();
 
         //If you click on the top and their is a dialog to show, display the dialog
-        outline.setOnMouseClicked(event -> {
-            if (dialog != null) {
-                dialog.show(mainStage);
-            }
-        });
+        outline.setOnMouseClicked(dialogClicker);
         outline.getChildren().addAll(topLayout, botLayout);
         return outline;
     }
@@ -843,11 +861,7 @@ public class Main extends Application {
         toolBar.getStyleClass().add("toolbar");
         toolBar.setPrefWidth(primaryScreenBounds.getWidth());
         //If you click on the top and their is a dialog to show, display the dialog
-        toolBar.setOnMouseClicked(event -> {
-            if (dialog != null) {
-                dialog.show(mainStage);
-            }
-        });
+        toolBar.setOnMouseClicked(dialogClicker);
         return toolBar;
     }
 
@@ -877,6 +891,7 @@ public class Main extends Application {
      * These loops create the section of the GUI where it is divided by account, the first loop loops over all currently added AWS accounts
      * The second loop goes over the AWS controllers, checks if they belong to the current looping account and if so draws them in their rows
      * If the rows exceed instancesWide it starts a new row
+     *
      * @param instancesWide The number of instances to draw in each row.
      */
     private void drawServiceBoxes(int instancesWide) {
@@ -951,11 +966,7 @@ public class Main extends Application {
         ScrollPane scrollPane = new ScrollPane(allInstances);
         scrollPane.setPannable(true);
         scrollPane.getStylesheets().add(styleSheet);
-        scrollPane.setOnMouseClicked(event -> {
-            if (dialog != null) {
-                dialog.show(mainStage);
-            }
-        });
+        scrollPane.setOnMouseClicked(dialogClicker);
 
         //Makes sure this is applied on the main thread so the GUI doesn't throw a fit
         Platform.runLater(() -> border.setCenter(scrollPane));
@@ -1026,6 +1037,8 @@ public class Main extends Application {
         outerLayout.getChildren().addAll(c);
 
         dialog = guiFactory.setupDialog(-1, -1, outerLayout);
+        dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
+        dialog.setY(mainStage.getY() + mainStage.getHeight() / 2 - dialog.getHeight() / 2);
         dialog.show(mainStage);
         dialog.setAutoHide(true);
     }
@@ -1598,7 +1611,7 @@ public class Main extends Application {
         int runningEc2 = 0;
         int runningRDS = 0;
         int runningRedshift = 0;
-        double runningCosts = 0;
+        Double runningCosts = 0.0;
         //All running types
         for (AmazonAccount account : accounts) {
             Map<String, Integer> thisRC = account.getRunningCount();
@@ -1607,7 +1620,7 @@ public class Main extends Application {
                 runningRDS = runningRDS + thisRC.get("rds");
                 runningRedshift = runningRedshift + thisRC.get("redshift");
                 for (Service service : account.getServices()) {
-                    if (Service.runningTitles().contains(service.serviceState())) {
+                    if (!service.serviceState().equalsIgnoreCase("stopped")) {
                         runningCosts += service.servicePrice();
                     }
                 }
@@ -1627,7 +1640,7 @@ public class Main extends Application {
         HBox runningRedshiftBox = guiFactory.labelAndField("Running Redshift: ", "" + runningRedshift, textWidth, labelWidth, styleClass);
         c.add(runningRedshiftBox);
 
-        HBox runningCostsBox = guiFactory.labelAndField("Running Costs ($/hr): ", "$" + runningCosts, textWidth, labelWidth, styleClass);
+        HBox runningCostsBox = guiFactory.labelAndField("Running Costs ($/hr): ", "$" + String.format("%.2f", round(runningCosts, 2)), textWidth, labelWidth, styleClass);
         c.add(runningCostsBox);
 
         List<Node> b = new ArrayList<>();
@@ -1672,7 +1685,7 @@ public class Main extends Application {
 
             HBox accountRedshiftBox = guiFactory.labelAndField("Running Redshift: ", "" + thisRunningRedshift, textWidth, labelWidth, styleClass);
 
-            HBox accountCostsBox = guiFactory.labelAndField("Current Costs ($/hr): ", "$" + thisRunningCosts, textWidth, labelWidth, styleClass);
+            HBox accountCostsBox = guiFactory.labelAndField("Current Costs ($/hr): ", "$" + String.format("%.2f",round(thisRunningCosts,2)), textWidth, labelWidth, styleClass);
 
             VBox thisAccountStats = new VBox(accountTitle, allServicesBox, allRunningBox, space2, accountEc2Box, accountRDSBox, accountRedshiftBox, accountCostsBox);
             thisAccountStats.setMinWidth(statisticsBoxWidth);
