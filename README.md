@@ -118,6 +118,7 @@ Please submit these to GitHub issue tracking at https://github.com/OptimalBI/opt
 	    * Update AWS library to 1.9.19
 	    * Changed font system to use Google Fonts so that the app is consistent across all OS's
 	    * Added SimpleLog with its proper path
-	    * Added javadocs and sources to pom build script
-
+	    * Added Redshift and RDS to the pricing information
+	    * Added labels and fixed GUI bugs
+	    * Assorted minor bug fixes
 ```
