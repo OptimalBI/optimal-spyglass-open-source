@@ -82,44 +82,7 @@ Please submit these to GitHub issue tracking at https://github.com/OptimalBI/opt
 You can get info and find out more from our blog site http://blog.optimalbi.com/category/optimalspyglass/
 
 ## Change log: ##
-
 ```
-<<<<<<< HEAD
-   v0.0.1
-        -Initial Build.
-   v0.0.2
-        -Restricted Redshift to valid regions.
-        -Enhanced region menu functionality.
-        -Enabled debug mode for alpha builds.
-   v0.0.3
-        -Fixed region display bug caused by RDS databases.
-        -Fixed account display with space error.
-        -Created autohide event handler to stop javaFX popups hogging screen space.
-   v0.0.4
-        -Fixed bug with white box appearing on the top section of GUI on resize.
-        -Fixed RDS being naughty and eating macca's (drawing too wide) when it could.
-        -Fixed redraw bug when booting app and the size changes.
-        -Added very simple progress bar.
-        -Fixed autohide system.
-        -Major code clean up and added some documentation to the main GUI class.
-   v0.0.5
-        -Updated to aws-java-sdk v1.9.13.
-        -Removed one layer of abstraction from the AWS services section.
-        -Fixed some of the terminology to be more consistent.
-        -Changed the credentials file to match the AWS naming conventions for keys.
-        -Added proper password authentication to the app startup.
-        -Added change password system.
-        -Remove unneeded debug messages.
-	v0.0.6
-		-Fixed password GUI bugs
-		-Updated branding
-		-Updated licence
-	v0.7
-	    -Updated the dialog drawing system to help it to draw when needed
-	    -Tweaked OSX fonts to make it look more similar
-	    -Added a version notification system to help people know about new releases
-```
-=======
     v0.0.1
         * Initial Build.
     v0.0.2
@@ -146,19 +109,18 @@ You can get info and find out more from our blog site http://blog.optimalbi.com/
         * Added change password system.
         * Remove unneeded debug messages.
     v0.0.6
-		* Fixed password GUI bugs
-		* Updated branding
-		* Updated licence
+	* Fixed password GUI bugs
+	* Updated branding
+	* Updated licence
     v0.7
-	    * Updated the dialog drawing system to help it to draw when needed
-	    * Tweaked OSX fonts to make it look more similar
-	    * Added a version notification system to help people know about new releases
-	v0.8
-	    * Update AWS library to 1.9.19
-	    * Changed font system to use Google Fonts so that the app is consistent across all OS's
-	    * Added SimpleLog with its proper path
-	    * Added Redshift and RDS to the pricing information
-	    * Added labels and fixed GUI bugs
-	    * Assorted minor bug fixes
+	* Updated the dialog drawing system to help it to draw when needed
+	* Tweaked OSX fonts to make it look more similar
+	* Added a version notification system to help people know about new releases
+    v0.8
+	* Update AWS library to 1.9.19
+	* Changed font system to use Google Fonts so that the app is consistent across all OS's
+	* Added SimpleLog with its proper path
+	* Added Redshift and RDS to the pricing information
+	* Added labels and fixed GUI bugs
+	* Assorted minor bug fixes
 ```
->>>>>>> v0.8
