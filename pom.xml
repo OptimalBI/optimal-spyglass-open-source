@@ -3,29 +3,32 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.optimalbi</groupId>
     <artifactId>OptimalSpyglass</artifactId>
-    <version>0.7</version>
+    <version>0.8</version>
     <packaging>jar</packaging>
     <name>OptimalSpyglass</name>
     <url>http://maven.apache.org</url>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>ossrh</id>
+            <name>Sonatype Snapshot</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk</artifactId>
-            <version>1.9.17</version>
+            <version>1.9.23</version>
         </dependency>
         <dependency>
             <groupId>org.jasypt</groupId>
             <artifactId>jasypt</artifactId>
             <version>1.9.2</version>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>3.8.1</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>commons-lang</groupId>
@@ -37,8 +40,12 @@
             <artifactId>plexus-utils</artifactId>
             <version>1.1</version>
         </dependency>
+        <dependency>
+            <groupId>com.optimalbi</groupId>
+            <artifactId>OptimalSpyglassLibrary</artifactId>
+            <version>0.1.1</version>
+        </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>
@@ -64,7 +71,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>com.optimalbi.GUI</mainClass>
+                            <mainClass>com.optimalbi.GUI.Main</mainClass>
                             <addDefaultImplementationEntries>
                                 true
                             </addDefaultImplementationEntries>

@@ -1,4 +1,4 @@
-package com.optimalbi.SimpleLog;
+package org.timothygray.SimpleLog;
 
 
 /*
@@ -19,7 +19,7 @@ package com.optimalbi.SimpleLog;
 
 
 /**
- * Created by Timothy Gray(timg) on 24/09/2014.
+ * Logger for testing purposes
  */
 public class TestLogger implements Logger {
 

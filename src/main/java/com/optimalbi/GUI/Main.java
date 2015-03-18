@@ -1,5 +1,4 @@
-package com.optimalbi;
-
+package com.optimalbi.GUI;
 /*
    Copyright 2015 OptimalBI
 
@@ -12,6 +11,7 @@ package com.optimalbi;
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
  */
@@ -19,34 +19,41 @@ package com.optimalbi;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
-import com.optimalbi.Controller.AmazonAccount;
+import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
+import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
+import com.amazonaws.services.cloudwatch.model.Datapoint;
+import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsRequest;
+import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsResult;
+import com.optimalbi.AmazonAccount;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
 import com.optimalbi.Controller.Containers.AmazonRegion;
+import com.optimalbi.GUI.TjfxFactory.TjfxFactory;
+import com.optimalbi.ServicePricing;
 import com.optimalbi.Services.Service;
-import com.optimalbi.SimpleLog.EmptyLogger;
-import com.optimalbi.SimpleLog.FileLogger;
-import com.optimalbi.SimpleLog.GuiLogger;
-import com.optimalbi.SimpleLog.Logger;
-import com.optimalbi.TjfxFactory.TjfxFactory;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.*;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -60,41 +67,50 @@ import org.jasypt.encryption.pbe.config.SimplePBEConfig;
 import org.jasypt.properties.PropertyValueEncryptionUtils;
 import org.jasypt.util.password.BasicPasswordEncryptor;
 import org.jasypt.util.password.PasswordEncryptor;
+import org.timothygray.SimpleLog.EmptyLogger;
+import org.timothygray.SimpleLog.FileLogger;
+import org.timothygray.SimpleLog.Logger;
 
 import java.awt.*;
 import java.io.*;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Created by Timothy Gray on 30/10/2014.
- * Version 1.0.1
+ * The main GUI controller and GUI logic for OptimalSpyglass. Includes encryption and connection/file connection/
+ *
+ * @author Timothy Gray
  */
-public class GUI extends Application {
-    private static final int[] curVer = {0, 7, 0};
+public class Main extends Application {
+    private static final int[] curVer = {0, 8, 0};
     private static double applicationHeight;
     private static double applicationWidth;
     private static Stage mainStage;
-    private final boolean debugMode = false;
+    private Stage secondStage;
+
     //Gui Components
     private final double buttonWidth = 240;
     private final double buttonHeight = 60;
     private final String styleSheet = "style.css";
     private final BorderPane border = new BorderPane();
-    //Amazon related variables
     private final File credentialsFile = new File("credentials");
     private final File settingsFile = new File("settings.cfg");
+    private final File pricingFile = new File("Pricing.csv");
+    private ServicePricing pricing = null;
     //Bounds of the application
     private Rectangle2D primaryScreenBounds;
     private Map<String, TextField> fields;
     private Logger logger;
     private Popup dialog;
-    private TextArea debugOut = null;
+
     private TjfxFactory guiFactory;
     private ProgressBar progressBar = null;
     private List<AmazonCredentials> credentials;
@@ -113,10 +129,35 @@ public class GUI extends Application {
     @SuppressWarnings("FieldCanBeLocal")
     private String viewedRegion = "summary";
     private Timer timer;
+
+    private final ChangeListener<Boolean> dialogChangeListener = new ChangeListener<Boolean>() {
+        @Override
+        public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+            if(newValue) {
+                if(dialog!=null) {
+                    dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
+                    dialog.setY(mainStage.getY() + mainStage.getHeight() / 2.75 - dialog.getHeight() / 2);
+                    dialog.show(mainStage);
+                }
+            }
+        }
+    };
+
+    private final EventHandler<MouseEvent> dialogClicker = new EventHandler<MouseEvent>() {
+        @Override
+        public void handle(MouseEvent event) {
+            if(dialog!=null) {
+                dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
+                dialog.setY(mainStage.getY() + mainStage.getHeight() / 2.75 - dialog.getHeight() / 2);
+                dialog.show(mainStage);
+            }
+        }
+    };
+
     private final ChangeListener<Number> paintListener = new ChangeListener<Number>() {
         /*
-            Creates a delayed draw event which will create a new thread and wait for delayTime number of seconds
-            before redrawing the centre and top of the app.
+         *   Creates a delayed draw event which will create a new thread and wait for delayTime number of seconds
+         *   before redrawing the centre and top of the app.
          */
         @Override
         public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
@@ -126,10 +167,15 @@ public class GUI extends Application {
                     @Override
                     public void run() {
                         primaryScreenBounds = Screen.getPrimary().getVisualBounds();
-                        applicationHeight = primaryScreenBounds.getHeight() / 1.11;
-                        applicationWidth = primaryScreenBounds.getWidth() / 1.11;
-                        Platform.runLater(GUI.this::updatePainting);
+                        applicationHeight = mainStage.getHeight();
+                        applicationWidth = mainStage.getWidth();
+                        dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
+                        dialog.setY(mainStage.getY() + mainStage.getHeight() / 2.75 - dialog.getHeight() / 2);
+                        dialog.show(mainStage);
+                        Platform.runLater(Main.this::updatePainting);
                         Platform.runLater(() -> border.setTop(createTop()));
+                        Platform.runLater(() -> border.setBottom(createBottom()));
+                        Platform.runLater(() -> border.setLeft(createLeft()));
                     }
                 };
                 timer.schedule(task, delayTime);
@@ -137,17 +183,19 @@ public class GUI extends Application {
         }
     };
 
+    public static double round(double value, int places) {
+        if (places < 0) throw new IllegalArgumentException();
+
+        BigDecimal bd = new BigDecimal(value);
+        bd = bd.setScale(places, RoundingMode.HALF_UP);
+        return bd.doubleValue();
+    }
+
     private static void download(URL input, File output) throws IOException {
-        InputStream in = input.openStream();
-        try {
-            OutputStream out = new FileOutputStream(output);
-            try {
+        try (InputStream in = input.openStream()) {
+            try (OutputStream out = new FileOutputStream(output)) {
                 copy(in, out);
-            } finally {
-                out.close();
             }
-        } finally {
-            in.close();
         }
     }
 
@@ -162,7 +210,7 @@ public class GUI extends Application {
         }
     }
 
-    public static void openWebpage(URI uri) {
+    private static void openWebpage(URI uri) {
         Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
         if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {
             try {
@@ -170,14 +218,6 @@ public class GUI extends Application {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
-    }
-
-    public static void openWebpage(URL url) {
-        try {
-            openWebpage(url.toURI());
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
         }
     }
 
@@ -191,19 +231,20 @@ public class GUI extends Application {
         encryptor = new StandardPBEStringEncryptor();
         encryptor.setConfig(simplePBEConfig);
 
-        //Setup the timer that is used to trigger threaded events
+        //Setup the timer that is used to trigger the redraw event
         timer = new Timer();
 
         try {
             File logFile = new File("log.txt");
             logFile.delete();
-            logFile.createNewFile();
+            if (!logFile.createNewFile()) throw new IOException("Failed to create log file");
             logger = new FileLogger(logFile);
         } catch (IOException e) {
+            System.err.print("Failed to create logFile: " + e.getLocalizedMessage());
             logger = new EmptyLogger();
         }
 
-        //Setup global GUI variables
+        //Setup global Main variables
         mainStage = primaryStage;
         primaryScreenBounds = Screen.getPrimary().getVisualBounds();
         applicationHeight = primaryScreenBounds.getHeight() / 1.11;
@@ -217,42 +258,15 @@ public class GUI extends Application {
         mainStage.show();
 
         //If the mainStage becomes focused redraw the hidden popup
-        mainStage.focusedProperty().addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                if (!oldValue && dialog != null) {
-                    dialog.show(mainStage);
-                }
-            }
-        });
-//        mainStage.setMaximized(true);
+        mainStage.focusedProperty().addListener(dialogChangeListener);
 
-
-        //Setup the logger with attachment to the GUI, if it fails only use the logger to the console
-        try {
-            File logFile = new File("log.txt");
-            if (!logFile.exists()) {
-                logFile.createNewFile();
-            }
-            logger = new GuiLogger(logFile, debugOut);
-        } catch (IOException e) {
-            logger = new EmptyLogger();
-        }
         logger.info("Hello chaps");
 
         //Process the settings file
         loadSettings();
 
         border.setTop(createTop());
-        border.setCenter(waitingCentre());
-        border.focusedProperty().addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                if (!oldValue && dialog != null) {
-                    dialog.show(mainStage);
-                }
-            }
-        });
+        border.focusedProperty().addListener(dialogChangeListener);
 
         //Load access keys from file, if they don't exist ask for them
         //TODO: check if keys are valid on load
@@ -341,7 +355,8 @@ public class GUI extends Application {
         layout.getStyleClass().add("popup");
 
         dialog = guiFactory.setupDialog(applicationWidth / 3.2, applicationHeight / 2, layout);
-        border.setCenter(waitingCentre());
+        dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
+        dialog.setY(mainStage.getY() + mainStage.getHeight() / 2 - dialog.getHeight() / 2);
         dialog.show(mainStage);
         dialog.setAutoHide(true);
     }
@@ -354,7 +369,7 @@ public class GUI extends Application {
     }
 
     private void askForPassword(String promptText, int attempts) {
-        double textWidth = 160; //The minimum size the labels take up (aligns the GUI)
+        double textWidth = 160; //The minimum size the labels take up (aligns the Main)
         fields = new HashMap<>(); //Reset the fields collection so we can use it from the callback method
         VBox layout = new VBox();
         layout.setPrefWidth(applicationWidth / 3);
@@ -407,7 +422,7 @@ public class GUI extends Application {
         buttonBox.setAlignment(Pos.BOTTOM_RIGHT);
         c.add(buttonBox);
 
-        EventHandler finishEvent = event -> {
+        EventHandler<ActionEvent> finishEvent = event -> {
             if (passwordField.getText().equals("")) {
                 askForPassword("Please enter a valid password", 0);
             } else if (!matchPassword(passwordField.getText())) {
@@ -425,7 +440,7 @@ public class GUI extends Application {
                     askForCredentials();
                 } else {
                     //Else go and populate the services with their controllers
-                    createControllers();
+                    createAccounts();
                 }
             }
         };
@@ -437,7 +452,6 @@ public class GUI extends Application {
         layout.getStyleClass().add("popup");
         layout.getStylesheets().add(styleSheet);
         layout.setAlignment(Pos.TOP_LEFT);
-        border.setCenter(waitingCentre());
 
         resetDialog();
         dialog = guiFactory.setupDialog(applicationWidth / 2, applicationHeight / 2, layout);
@@ -453,12 +467,14 @@ public class GUI extends Application {
     }
 
     private void createGUI() {
-
         //Create the gui sections
-        border.setCenter(waitingCentre());
         border.setLeft(createLeft());
         border.setBottom(createBottom());
         border.setTop(createTop());
+        VBox centrePlaceHolder = new VBox();
+        centrePlaceHolder.setPrefSize(applicationWidth, applicationHeight);
+        centrePlaceHolder.setOnMouseClicked(dialogClicker);
+        border.setCenter(centrePlaceHolder);
 
         //Add gui sections to the stage
         Scene scene = new Scene(border, applicationWidth, applicationHeight);
@@ -471,21 +487,11 @@ public class GUI extends Application {
     private void addShutdownHook() {
         //Fixes a bug with the windows crashing on exit when using the OS close button
         mainStage.setOnCloseRequest(event -> System.exit(0));
-//        Runtime.getRuntime().addShutdownHook(new Thread() {
-//            @Override
-//            public void run() {
-//                System.out.println("Shutdown hook!");
-//                if (timer != null) {
-//                    timer.cancel();
-//                }
-//                System.exit(0);
-//            }
-//        });
     }
 
     private VBox createLeft() {
         /*
-         *Some GUI components are created then not assigned, these are debug only components
+         *Some Main components are created then not assigned, these are debug only components
          */
         List<Node> guiComponents = new ArrayList<>();
         VBox layout = new VBox();
@@ -501,34 +507,10 @@ public class GUI extends Application {
         Button update = guiFactory.createButton("Update");
         update.setAlignment(Pos.BASELINE_LEFT);
         update.setOnAction(ActionEvent -> {
-            border.setCenter(waitingCentre());
-            TimerTask task = new TimerTask() {
-                @Override
-                public void run() {
-                    Platform.runLater(GUI.this::createControllers);
-                }
-            };
-            timer.schedule(task, 100);
+            Platform.runLater(Main.this::createAccounts);
         });
-        guiComponents.add(update);
 
-        //Refresh Button - This button only redraws the GUI
-        Button refresh = guiFactory.createButton("Refresh");
-        refresh.setAlignment(Pos.BASELINE_LEFT);
-        refresh.setOnAction(event -> {
-            logger.info("Refreshing");
-            border.setCenter(waitingCentre());
-            TimerTask task = new TimerTask() {
-                @Override
-                public void run() {
-                    Platform.runLater(GUI.this::updatePainting);
-                }
-            };
-            timer.schedule(task, 200);
-        });
-        if (debugMode) {
-            guiComponents.add(refresh);
-        }
+        guiComponents.add(update);
 
         //Manage credentials
         Button manageCredentials = guiFactory.createButton("Add/Remove credentials");
@@ -546,6 +528,8 @@ public class GUI extends Application {
         Button exit = guiFactory.createButton("Exit");
         exit.setAlignment(Pos.BASELINE_LEFT);
         exit.setOnAction(event -> System.exit(0));
+        exit.setFocusTraversable(true);
+        exit.requestFocus();
         //Exit box
         HBox exitBox = new HBox(exit);
         exitBox.setMinHeight(buttonHeight);
@@ -561,19 +545,12 @@ public class GUI extends Application {
         layout.setPrefHeight(applicationHeight);
         layout.getStylesheets().add("style.css");
         layout.getStyleClass().add("leftStyle");
-        layout.setOnMouseClicked(event -> {
-            if (dialog != null) {
-                dialog.show(mainStage);
-            }
-        });
+        layout.setOnMouseClicked(dialogClicker);
         return layout;
     }
 
     private void changePassword() {
         ArrayList<Node> c = new ArrayList<>();
-
-        //Prompt text
-        Text prompt = new Text("Change password");
 
         //Old password combo box
         Label oldPswdLabel = new Label("Old password: ");
@@ -602,7 +579,7 @@ public class GUI extends Application {
         buttons.getStyleClass().add("subpopup");
         c.add(buttons);
 
-        EventHandler goEvent = event -> {
+        EventHandler<ActionEvent> goEvent = event -> {
             if (oldPswdField.getText().equals(decryptedPassword)) {
                 decryptedPassword = newPswdField.getText();
 
@@ -657,39 +634,35 @@ public class GUI extends Application {
         bottomLeft.setAlignment(Pos.BOTTOM_LEFT);
         bottomLeft.getStylesheets().add("style.css");
         bottomLeft.getStyleClass().add("botStyle");
-        bottomLeft.setPrefSize(cr.getPrefWidth(), 20);
+        bottomLeft.setPrefSize(applicationWidth / 2, 20);
         bottomLeft.getChildren().add(cr);
         guiComponents.add(bottomLeft); //Add after debug output
 
-        //Debug window - fake console output for if we are debugging
-        if (debugOut == null) {
-            debugOut = new TextArea();
-        }
-        debugOut.setEditable(false);
-        debugOut.setPrefWidth((applicationWidth - (cr.getPrefWidth() + 10)));
-        debugOut.setPrefHeight(60);
-        debugOut.getStyleClass().add("textField");
-        debugOut.getStylesheets().add(styleSheet);
-        debugOut.setMaxHeight(60);
-        debugOut.setScrollTop(debugOut.getHeight());
-        debugOut.setWrapText(true);
-        if (debugMode) guiComponents.add(debugOut);
+        //Version Text
+        HBox verTextBox = new HBox();
+        Label verText = new Label(String.format("Version: %d.%d.%d", curVer[0], curVer[1], curVer[2]));
+        verText.setMinWidth(320);
+        verText.setTextFill(Color.WHITE);
+        verText.setPrefWidth(320);
+        verText.setAlignment(Pos.BOTTOM_RIGHT);
+        verTextBox.setAlignment(Pos.BOTTOM_RIGHT);
+        verTextBox.getStylesheets().add("style.css");
+        verTextBox.getStyleClass().add("botStyle");
+        verTextBox.setPrefSize(applicationWidth / 2, 20);
+        verTextBox.getChildren().add(verText);
+        guiComponents.add(verTextBox); //Add after debug output
 
         layout.getChildren().addAll(guiComponents);
         layout.getStylesheets().add("style.css");
         layout.getStyleClass().add("otherBotStyle");
         layout.setPrefSize(applicationWidth, 20);
         layout.setAlignment(Pos.BOTTOM_LEFT);
-        layout.setOnMouseClicked(event -> {
-            if (dialog != null) {
-                dialog.show(mainStage);
-            }
-        });
+        layout.setOnMouseClicked(dialogClicker);
         return layout;
     }
 
     private VBox waitingCentre() {
-        progressBar = new ProgressBar(0.0);
+        progressBar = new ProgressBar(0.03);
         progressBar.setPrefWidth(applicationWidth / 2);
         progressBar.setPrefHeight(15);
 
@@ -705,16 +678,8 @@ public class GUI extends Application {
         layout.setPrefHeight(applicationHeight / 2);
         layout.getStylesheets().add("style.css");
         layout.getStyleClass().add("centreStyle");
-        layout.setOnMouseClicked(event -> {
-            if (dialog != null) {
-                dialog.show(mainStage);
-            }
-        });
+        layout.setOnMouseClicked(dialogClicker);
         return layout;
-    }
-
-    private void setLabelCentre(String label) {
-        Platform.runLater(() -> border.setCenter(labelCentre(label)));
     }
 
     private VBox labelCentre(String label) {
@@ -740,7 +705,7 @@ public class GUI extends Application {
         guiComponents.add(iv1);
 
         //Get application version
-        String version = GUI.class.getPackage().getImplementationVersion();
+        String version = Main.class.getPackage().getImplementationVersion();
 
         //Text for the title
         Label title = new Label();
@@ -756,7 +721,7 @@ public class GUI extends Application {
 
         //Version notification
         List<Integer> versi = getLatestVersionNumber();
-        logger.debug(String.format("Version info %d.%d.%d", versi.get(0), versi.get(1), versi.get(2)));
+        logger.debug(String.format("Remote version: %d.%d.%d. Current version: %d.%d.%d.", versi.get(0), versi.get(1), versi.get(2), curVer[0], curVer[1], curVer[2]));
         //Int varibles to clear my head
         int curMaj = curVer[0];
         int curMin = curVer[1];
@@ -808,11 +773,7 @@ public class GUI extends Application {
         VBox outline = new VBox();
 
         //If you click on the top and their is a dialog to show, display the dialog
-        outline.setOnMouseClicked(event -> {
-            if (dialog != null) {
-                dialog.show(mainStage);
-            }
-        });
+        outline.setOnMouseClicked(dialogClicker);
         outline.getChildren().addAll(topLayout, botLayout);
         return outline;
     }
@@ -836,8 +797,7 @@ public class GUI extends Application {
                 vers.set(1, Integer.parseInt(split[1]));
                 vers.set(2, Integer.parseInt(split[2]));
             } catch (IOException e) {
-                logger.error("Failed to read settings file: " + e.getMessage());
-                setLabelCentre("Failed to read settings file: " + e.getMessage());
+                logger.error("Failed to save version file: " + e.getMessage());
             }
             versionTemp.delete();
             return vers;
@@ -853,7 +813,11 @@ public class GUI extends Application {
     private ToolBar updateToolbar() {
         Map<String, String> regionNames = Service.regionNames();
 
-        List<Button> toolButtons = new ArrayList<>();
+        List<Node> toolButtons = new ArrayList<>();
+        Label allFilterLabel = new Label("View: ");
+        allFilterLabel.getStyleClass().add("toolbarLabel");
+        toolButtons.add(allFilterLabel);
+
         Button summary = guiFactory.createButton("Summary", -1, -1);
         summary.setOnAction(ActionEvent -> {
             viewedRegion = "summary";
@@ -867,6 +831,14 @@ public class GUI extends Application {
             updatePainting();
         });
         toolButtons.add(all);
+
+        javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
+        spacer.setPrefWidth(18);
+        toolButtons.add(spacer);
+
+        Label regionLabel = new Label("Region Filter: ");
+        regionLabel.getStyleClass().add("toolbarLabel");
+        toolButtons.add(regionLabel);
 
         for (Region region : currentRegions) {
             Button adding;
@@ -885,44 +857,46 @@ public class GUI extends Application {
         ToolBar toolBar = new ToolBar();
         toolBar.getItems().addAll(toolButtons);
         toolBar.getStylesheets().add(styleSheet);
+
         toolBar.getStyleClass().add("toolbar");
         toolBar.setPrefWidth(primaryScreenBounds.getWidth());
         //If you click on the top and their is a dialog to show, display the dialog
-        toolBar.setOnMouseClicked(event -> {
-            if (dialog != null) {
-                dialog.show(mainStage);
-            }
-        });
+        toolBar.setOnMouseClicked(dialogClicker);
         return toolBar;
     }
 
     private void updatePainting() {
         if (!redrawHook) {
-            //The first time we draw, hook the redraw listener to the changes in the GUI's size
-            TimerTask task = new TimerTask() {
+            //The first time we draw, hook the redraw listener to the changes in the Main's size
+            Task task = new Task<Void>() {
                 @Override
-                public void run() {
+                protected Void call() throws Exception {
                     mainStage.widthProperty().addListener(paintListener);
                     mainStage.heightProperty().addListener(paintListener);
+                    return null;
                 }
             };
-            timer.schedule(task, 50);
+            new Thread(task).start();
             redrawHook = true;
         }
         if (!viewedRegion.equals("summary")) {
-            int instancesWide = (int) (mainStage.getWidth() / (Service.serviceWidth() + 20));
+            int instancesWide = (int) (mainStage.getWidth() / (ServiceDraw.serviceWidth + 20));
             drawServiceBoxes(instancesWide);
         } else {
             drawSummary();
         }
     }
 
+    /**
+     * These loops create the section of the GUI where it is divided by account, the first loop loops over all currently added AWS accounts
+     * The second loop goes over the AWS controllers, checks if they belong to the current looping account and if so draws them in their rows
+     * If the rows exceed instancesWide it starts a new row
+     *
+     * @param instancesWide The number of instances to draw in each row.
+     */
     private void drawServiceBoxes(int instancesWide) {
-   /*
-    * These loops create the section of the GUI where it is divided by account, the first loop loops over all currently added AWS accounts
-    * The second loop goes over the AWS controllers, checks if they belong to the current looping account and if so draws them in their rows
-    * If the rows exceed instancesWide it starts a new row
-    */
+
+        ServiceDraw draw = new ServiceDraw(styleSheet);
         VBox allInstances = new VBox();
 
         for (AmazonCredentials credential : credentials) {
@@ -936,22 +910,32 @@ public class GUI extends Application {
             for (AmazonAccount account : accounts) {
                 if (account.getCredentials().getAccountName().equals(credential.getAccountName())) {
                     List<Service> services = account.getServices();
-                    List<VBox> toDraw = account.drawInstances();
                     ArrayList<HBox> rows = new ArrayList<>();
                     HBox currentRow = new HBox();
-                    for (VBox box : toDraw) {
+                    for (Service service : services) {
+                        VBox box = draw.drawOne(service);
+
+                        if (service.serviceType().equalsIgnoreCase("ec2")) {
+                            //Add graph button to box
+                            Button graph = guiFactory.createButton("Graphs", "popupButtons", buttonWidth, 10);
+                            graph.setOnAction(actionEvent -> {
+                                resetDialog();
+                                dialog = drawGraph(account.getCredentials(), service, mainStage.getScene());
+                                dialog.setAutoHide(true);
+                                dialog.show(mainStage);
+                            });
+                            box.getChildren().add(graph);
+                        }
+
                         if (viewedRegion.equals("all")) {
                             box.getStyleClass().add("instance");
                             currentRow.getChildren().add(box);
                             i++;
                         } else {
-                            int index = toDraw.indexOf(box);
-                            if (index >= 0) {
-                                if (services.get(index).serviceRegion().getName().equals(viewedRegion)) {
-                                    box.getStyleClass().add("instance");
-                                    currentRow.getChildren().add(box);
-                                    i++;
-                                }
+                            if (service.serviceRegion().getName().equals(viewedRegion)) {
+                                box.getStyleClass().add("instance");
+                                currentRow.getChildren().add(box);
+                                i++;
                             }
                         }
                         if (i + 1 >= instancesWide) {
@@ -980,19 +964,16 @@ public class GUI extends Application {
 
         //Adds them to a scroll pane so if the window is too small we can scroll!
         ScrollPane scrollPane = new ScrollPane(allInstances);
+        scrollPane.setPannable(true);
         scrollPane.getStylesheets().add(styleSheet);
-        scrollPane.setOnMouseClicked(event -> {
-            if (dialog != null) {
-                dialog.show(mainStage);
-            }
-        });
+        scrollPane.setOnMouseClicked(dialogClicker);
 
         //Makes sure this is applied on the main thread so the GUI doesn't throw a fit
         Platform.runLater(() -> border.setCenter(scrollPane));
     }
 
     private void askForCredentials() {
-        double textWidth = 160; //The minimum size the labels take up (aligns the GUI)
+        double textWidth = 160; //The minimum size the labels take up (aligns the Main)
         fields = new HashMap<>(); //Reset the fields collection so we can use it from the callback method
 
         VBox outerLayout = new VBox();
@@ -1056,6 +1037,8 @@ public class GUI extends Application {
         outerLayout.getChildren().addAll(c);
 
         dialog = guiFactory.setupDialog(-1, -1, outerLayout);
+        dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
+        dialog.setY(mainStage.getY() + mainStage.getHeight() / 2 - dialog.getHeight() / 2);
         dialog.show(mainStage);
         dialog.setAutoHide(true);
     }
@@ -1096,13 +1079,12 @@ public class GUI extends Application {
             dialog = null;
             fields = null;
         }
-        Platform.runLater(() -> border.setCenter(GUI.this.waitingCentre()));
 
         //After saving to file reload the credentials into memory to prevent duplicates
         getAccessKeys();
         if (credentials != null) {
             try {
-                createControllers();
+                createAccounts();
             } catch (AmazonClientException e) {
                 logger.error("Failed to create credentials " + e.getMessage());
             }
@@ -1177,7 +1159,7 @@ public class GUI extends Application {
             }
         } catch (IOException e) {
             logger.error("Failed to read credentials file: " + e.getMessage());
-            setLabelCentre("Failed to read credentials file: " + e.getMessage());
+            Platform.runLater(() -> border.setCenter(labelCentre("Failed to read credentials file: " + e.getMessage())));
         }
         credentials = new ArrayList<>();
         for (int i = 0; i != accountNames.size(); i++) {
@@ -1188,7 +1170,8 @@ public class GUI extends Application {
         }
     }
 
-    private void createControllers() {
+    private void createAccounts() {
+        border.setCenter(waitingCentre());
         currentRegions = new ArrayList<>();
         //If the region is currently marked as one we are interested in then add it to the current regions collection
         currentRegions.addAll(allRegions.stream().filter(AmazonRegion::getActive).map(AmazonRegion::getRegion).collect(Collectors.toList()));
@@ -1197,10 +1180,15 @@ public class GUI extends Application {
         totalAreas = credentials.size() * currentRegions.size() * 3;
         logger.debug("Total areas: " + totalAreas);
 
+
+        //Setup the pricing system
+        if (pricingFile.exists() && pricing == null) {
+            pricing = new ServicePricing(pricingFile, logger);
+        }
+
         accounts = new ArrayList<>();
         for (AmazonCredentials credential : credentials) {
-            AmazonAccount thisController = new AmazonAccount(credential, currentRegions, logger);
-
+            AmazonAccount thisController = new AmazonAccount(credential, currentRegions, logger, pricing);
             thisController.getCompleted().addListener(new ChangeListener<Number>() {
                 @Override
                 public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
@@ -1220,7 +1208,7 @@ public class GUI extends Application {
                             ready = false;
                         }
                     }
-                    //If all controllers are ready then draw the GUI
+                    //If all controllers are ready then draw the Main
                     if (ready) {
                         updatePainting();
                     }
@@ -1228,34 +1216,34 @@ public class GUI extends Application {
             });
             accounts.add(thisController);
             //TODO: Figure out good way to describe the threading
-            TimerTask task = new TimerTask() {
-                @Override
-                public void run() {
+            Task task = new Task<Void>() {
+                protected Void call() throws Exception {
                     thisController.startConfigure();
+                    return null;
                 }
             };
-            timer.schedule(task, 2);
+            new Thread(task).start();
         }
     }
 
     private void updateProgress() {
         if (progressBar == null) return;
-
         double progress = ((double) doneAreas / (double) totalAreas);
-        progressBar.setProgress(progress);
+        Platform.runLater(() -> progressBar.setProgress(progress));
     }
 
     private void drawAccountManagement() {
         VBox allCredentials = new VBox();
         allCredentials.setPrefWidth(primaryScreenBounds.getWidth() / 3);
 
-        double textWidth = 270;
+        double textWidth = 350;
 
         for (AmazonCredentials credential : credentials) {
             Pos alignment = Pos.CENTER_LEFT;
 
             //Account label
             Label label = new Label("Account Name: ");
+            label.minWidth(textWidth);
             label.getStyleClass().add("textLabel");
 
             //Account name
@@ -1358,7 +1346,7 @@ public class GUI extends Application {
                 saveSettings();
                 viewedRegion = "all";
                 border.setCenter(waitingCentre());
-                createControllers();
+                createAccounts();
                 border.setTop(createTop());
             }
         });
@@ -1463,7 +1451,7 @@ public class GUI extends Application {
             }
         } catch (IOException e) {
             logger.error("Failed to read settings file: " + e.getMessage());
-            setLabelCentre("Failed to read settings file: " + e.getMessage());
+            Platform.runLater(() -> border.setCenter(labelCentre("Failed to read settings file: " + e.getMessage())));
         }
         Regions[] regionses = Regions.values();
         for (Regions re : regionses) {
@@ -1492,10 +1480,104 @@ public class GUI extends Application {
         writeCredentials();
     }
 
+    private Popup drawGraph(AmazonCredentials credentials, Service service, Scene mainScene) {
+        Popup popup = new Popup();
+
+        //Time period for stats
+        long DAY_IN_MS = 1000 * 60 * 60 * 24;
+        Date end = new Date();
+        Date start = new Date(end.getTime() - (7 * DAY_IN_MS));
+
+        VBox outerLayout = new VBox();
+        outerLayout.setPrefSize(mainScene.getWindow().getWidth() / 1.12, mainScene.getWindow().getHeight() / 1.12);
+
+        CategoryAxis xAxis = new CategoryAxis();
+        NumberAxis yAxis = new NumberAxis();
+
+        yAxis.setLabel("Percent, %");
+        xAxis.setLabel("Date");
+
+        LineChart<String, Number> lineChart = new LineChart<>(xAxis, yAxis);
+
+        lineChart.setTitle(service.serviceName() + " Metrics");
+
+        XYChart.Series<String, Number> cpuUtilMax = new XYChart.Series<>();
+        cpuUtilMax.setName("CPU Utilization, Max");
+        XYChart.Series<String, Number> cpuUtilAve = new XYChart.Series<>();
+        cpuUtilAve.setName("CPU Utilization, Median");
+
+        //Request CPU Util stats
+        GetMetricStatisticsRequest cpuUtilizationRequest = new GetMetricStatisticsRequest();
+        cpuUtilizationRequest.setMetricName("CPUUtilization");
+        cpuUtilizationRequest.setEndTime(end);
+        cpuUtilizationRequest.setStartTime(start);
+        cpuUtilizationRequest.setNamespace("AWS/EC2");
+
+        List<String> statistics = new ArrayList<>();
+        statistics.add("Maximum");
+        statistics.add("Average");
+        cpuUtilizationRequest.setStatistics(statistics);
+
+        List<com.amazonaws.services.cloudwatch.model.Dimension> dimensions = new ArrayList<>();
+        com.amazonaws.services.cloudwatch.model.Dimension instanceId = new com.amazonaws.services.cloudwatch.model.Dimension();
+        instanceId.setName("InstanceId");
+        instanceId.setValue(service.serviceID());
+        dimensions.add(instanceId);
+        cpuUtilizationRequest.setDimensions(dimensions);
+
+        cpuUtilizationRequest.setPeriod(86400 / 6); //Period in seconds
+
+        AmazonCloudWatch cloudWatch = new AmazonCloudWatchClient(credentials.getCredentials());
+        cloudWatch.setRegion(service.serviceRegion());
+
+        GetMetricStatisticsResult metricResult = cloudWatch.getMetricStatistics(cpuUtilizationRequest);
+
+        List<Datapoint> data = metricResult.getDatapoints();
+        Collections.sort(data, new Comparator<Datapoint>() {
+            @Override
+            public int compare(Datapoint o1, Datapoint o2) {
+                if (o1.getTimestamp().equals(o2.getTimestamp())) return 0;
+                else if (o1.getTimestamp().before(o2.getTimestamp())) return -1;
+                else return 1;
+            }
+        });
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm a, MMM d");
+        for (Datapoint da : data) {
+            cpuUtilMax.getData().add(new XYChart.Data<>(dateFormat.format(da.getTimestamp()), da.getMaximum()));
+            cpuUtilAve.getData().add(new XYChart.Data<>(dateFormat.format(da.getTimestamp()), da.getAverage()));
+        }
+
+
+        //noinspection unchecked
+        lineChart.getData().addAll(cpuUtilMax, cpuUtilAve);
+        lineChart.setPrefSize(outerLayout.getPrefWidth(), outerLayout.getPrefHeight());
+
+        //Buttons
+        HBox buttons = new HBox();
+        buttons.setPrefWidth(outerLayout.getPrefWidth());
+        //Close
+        Button close = new Button("Close");
+        close.setAlignment(Pos.BOTTOM_RIGHT);
+        close.setOnAction(event -> {
+            popup.hide();
+            resetDialog();
+        });
+        buttons.getChildren().add(close);
+        buttons.setAlignment(Pos.BOTTOM_RIGHT);
+
+        outerLayout.getChildren().addAll(lineChart, buttons);
+        outerLayout.getStylesheets().add("style.css");
+        outerLayout.getStyleClass().add("popup");
+
+        popup.getContent().add(outerLayout);
+        return popup;
+    }
+
     private void drawSummary() {
         int statisticsBoxWidth = 320;
         int labelWidth = 70;
-        double textWidth = 200;
+        double textWidth = 195;
 
 
         HBox outer = new HBox();
@@ -1504,7 +1586,6 @@ public class GUI extends Application {
         summaryStats.setMinWidth(statisticsBoxWidth);
 
         String styleClass = "statisticsTitle";
-
 
         List<Node> c = new ArrayList<>();
 
@@ -1530,7 +1611,7 @@ public class GUI extends Application {
         int runningEc2 = 0;
         int runningRDS = 0;
         int runningRedshift = 0;
-        double runningCosts = 0;
+        Double runningCosts = 0.0;
         //All running types
         for (AmazonAccount account : accounts) {
             Map<String, Integer> thisRC = account.getRunningCount();
@@ -1539,8 +1620,8 @@ public class GUI extends Application {
                 runningRDS = runningRDS + thisRC.get("rds");
                 runningRedshift = runningRedshift + thisRC.get("redshift");
                 for (Service service : account.getServices()) {
-                    if (service.serviceType().equalsIgnoreCase("ec2") && service.serviceState().equalsIgnoreCase("running")) {
-                        runningCosts = runningCosts + service.servicePrice();
+                    if (!service.serviceState().equalsIgnoreCase("stopped")) {
+                        runningCosts += service.servicePrice();
                     }
                 }
             }
@@ -1559,7 +1640,7 @@ public class GUI extends Application {
         HBox runningRedshiftBox = guiFactory.labelAndField("Running Redshift: ", "" + runningRedshift, textWidth, labelWidth, styleClass);
         c.add(runningRedshiftBox);
 
-        HBox runningCostsBox = guiFactory.labelAndField("Current Costs ($/hr): ", "$" + runningCosts, textWidth, labelWidth, styleClass);
+        HBox runningCostsBox = guiFactory.labelAndField("Running Costs ($/hr): ", "$" + String.format("%.2f", round(runningCosts, 2)), textWidth, labelWidth, styleClass);
         c.add(runningCostsBox);
 
         List<Node> b = new ArrayList<>();
@@ -1582,7 +1663,7 @@ public class GUI extends Application {
                 thisRunningRedshift = thisRunningRedshift + thisRC.get("redshift");
 
                 for (Service service : account.getServices()) {
-                    if (service.serviceType().equalsIgnoreCase("ec2") && service.serviceState().equalsIgnoreCase("running")) {
+                    if (Service.runningTitles().contains(service.serviceState())) {
                         thisRunningCosts = thisRunningCosts + service.servicePrice();
                     }
                 }
@@ -1604,7 +1685,7 @@ public class GUI extends Application {
 
             HBox accountRedshiftBox = guiFactory.labelAndField("Running Redshift: ", "" + thisRunningRedshift, textWidth, labelWidth, styleClass);
 
-            HBox accountCostsBox = guiFactory.labelAndField("Current Costs ($/hr): ", "$" + thisRunningCosts, textWidth, labelWidth, styleClass);
+            HBox accountCostsBox = guiFactory.labelAndField("Current Costs ($/hr): ", "$" + String.format("%.2f",round(thisRunningCosts,2)), textWidth, labelWidth, styleClass);
 
             VBox thisAccountStats = new VBox(accountTitle, allServicesBox, allRunningBox, space2, accountEc2Box, accountRDSBox, accountRedshiftBox, accountCostsBox);
             thisAccountStats.setMinWidth(statisticsBoxWidth);

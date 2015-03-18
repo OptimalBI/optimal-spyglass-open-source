@@ -1,3 +1,6 @@
+package org.timothygray.SimpleLog;
+
+
 /*
    Copyright 2015 OptimalBI
 
@@ -14,28 +17,28 @@
    limitations under the License.
  */
 
-package com.optimalbi.Controller.Containers;
 
-import com.amazonaws.regions.Region;
+import java.util.ArrayList;
+import java.util.List;
+
+import static java.util.Arrays.asList;
 
 /**
- * Created by Timothy Gray(timg) on 2/12/2014..
- * Version: 1.0.0
+ * Interface for a very simple way of creating log output to GUI's and/or files
  */
-public class AmazonRegion {
-    private final Region region;
-    private boolean active;
+public interface Logger {
 
-    public AmazonRegion(Region region, boolean active){
-        this.region = region;
-        this.active = active;
-    }
+    public static final List<logType> logTypesList = new ArrayList<logType>(asList(logType.DEBUG, logType.INFO, logType.WARN, logType.ERROR));
 
-    public Region getRegion(){return region;}
+    public void debug(String message);
 
-    public boolean getActive(){return active;}
+    public void warn(String message);
 
-    public void toggleActive(){
-        active = !active;
+    public void error(String message);
+
+    public void info(String message);
+
+    public static enum logType {
+        DEBUG, INFO, WARN, ERROR
     }
 }

@@ -1,4 +1,4 @@
-# OptimalSpyglass v0.7#
+# OptimalSpyglass v0.8#
 Copyright 2015 OptimalBI - Licensed under the Apache License, Version 2.0
 
 ## The story: ##
@@ -51,25 +51,22 @@ Download the latest pre-build release from https://github.com/OptimalBI/optimal-
 * Multiple accounts
 * Multiple regions
 * List all Ec2 and running Redshift,RDS from those regions
-* Provide CPU Util graph for Ec2 (maximum and median usage across six four-hour blocks per day, for the prior seven days)
+* Simple summary page of all AWS services
+* Provide CPU Util graph (maximum and median usage across six four-hour blocks per day, for the prior seven days)
 * Securing key is currently the responsibility of the user
-* Pricing based on supplied .csv files for ec2 (See root directory)
+* Pricing based on supplied .csv files (See root directory)
+    * The app will read the .csv file (Pricing.csv) and match the "Service.Size" to AWS Service types.
+    * If it has one then the pricing from "Cost.Per.Hour" will be used to calculate cost.
+    * The app will not take OS or Spot/Reserved instances into consideration.
+    * The app currently assumes that everything is IOPS optimised
+    * It is the end users responsibility to keep the pricing up to date
 * Provide standard encryption to the Secret Keys via login password method
-```
-	The app will read the .csv file (EC2.Pricing.csv) and match the "EC2.NAME" to ec2 instance types.
-	If it has one then the pricing from "Cost.Per.Hour" will be used to calculate cost.
-	The app will not take OS or Spot/Reserved instances into consideration.
-	It is the end users responsibility to keep the pricing up to date
-```
 
 ## Planned functionality: ##
 * Scheduled start and stop for all services
 * Listing all AWS services across all accounts
 * Unmanned management of AWS services
-* Simple summary page of all AWS services
 * List all tags for AWS services
-* Show progress bars while loading  
-* Current cost per hour of each service displayed
 * Provide start and stop for Ec2 (where access key allows this privilege)
 
 ## Current known issues: ##
@@ -87,6 +84,7 @@ You can get info and find out more from our blog site http://blog.optimalbi.com/
 ## Change log: ##
 
 ```
+<<<<<<< HEAD
    v0.0.1
         -Initial Build.
    v0.0.2
@@ -121,3 +119,46 @@ You can get info and find out more from our blog site http://blog.optimalbi.com/
 	    -Tweaked OSX fonts to make it look more similar
 	    -Added a version notification system to help people know about new releases
 ```
+=======
+    v0.0.1
+        * Initial Build.
+    v0.0.2
+        * Restricted Redshift to valid regions.
+        * Enhanced region menu functionality.
+        * Enabled debug mode for alpha builds.
+    v0.0.3
+        * Fixed region display bug caused by RDS databases.
+        * Fixed account display with space error.
+        * Created autohide event handler to stop javaFX popups hogging screen space.
+    v0.0.4
+        * Fixed bug with white box appearing on the top section of GUI on resize.
+        * Fixed RDS being naughty and eating macca's (drawing too wide) when it could.
+        * Fixed redraw bug when booting app and the size changes.
+        * Added very simple progress bar.
+        * Fixed autohide system.
+        * Major code clean up and added some documentation to the main GUI class.
+    v0.0.5
+        * Updated to aws-java-sdk v1.9.13.
+        * Removed one layer of abstraction from the AWS services section.
+        * Fixed some of the terminology to be more consistent.
+        * Changed the credentials file to match the AWS naming conventions for keys.
+        * Added proper password authentication to the app startup.
+        * Added change password system.
+        * Remove unneeded debug messages.
+    v0.0.6
+		* Fixed password GUI bugs
+		* Updated branding
+		* Updated licence
+    v0.7
+	    * Updated the dialog drawing system to help it to draw when needed
+	    * Tweaked OSX fonts to make it look more similar
+	    * Added a version notification system to help people know about new releases
+	v0.8
+	    * Update AWS library to 1.9.19
+	    * Changed font system to use Google Fonts so that the app is consistent across all OS's
+	    * Added SimpleLog with its proper path
+	    * Added Redshift and RDS to the pricing information
+	    * Added labels and fixed GUI bugs
+	    * Assorted minor bug fixes
+```
+>>>>>>> v0.8

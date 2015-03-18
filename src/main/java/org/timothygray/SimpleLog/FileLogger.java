@@ -1,4 +1,4 @@
-package com.optimalbi.SimpleLog;
+package org.timothygray.SimpleLog;
 
 /*
    Copyright 2015 OptimalBI
@@ -24,8 +24,7 @@ import java.io.PrintWriter;
 import java.util.Date;
 
 /**
- * Created by Timothy Gray(timg) on 24/09/2014.
- * Version: 0.2.1
+ * Logs output only to file
  */
 public class FileLogger implements Logger {
     private final File logFile;
