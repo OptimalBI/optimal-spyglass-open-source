@@ -90,7 +90,7 @@ import java.util.stream.Collectors;
  * @author Timothy Gray
  */
 public class Main extends Application {
-    private static final int[] curVer = {0, 8, 0};
+    private static final int[] curVer = {0, 9, 0};
     private static double applicationHeight;
     private static double applicationWidth;
     private static Stage mainStage;

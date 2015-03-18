@@ -1,4 +1,4 @@
-# OptimalSpyglass v0.8#
+# OptimalSpyglass v0.9#
 Copyright 2015 OptimalBI - Licensed under the Apache License, Version 2.0
 
 ## The story: ##
@@ -123,4 +123,5 @@ v0.8
 	* Added Redshift and RDS to the pricing information
 	* Added labels and fixed GUI bugs
 	* Assorted minor bug fixes
+v0.9
 ```
