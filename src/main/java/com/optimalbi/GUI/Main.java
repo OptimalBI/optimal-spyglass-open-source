@@ -94,7 +94,6 @@ public class Main extends Application {
     private static double applicationHeight;
     private static double applicationWidth;
     private static Stage mainStage;
-    private Stage secondStage;
 
     //Gui Components
     private final double buttonWidth = 240;
@@ -103,8 +102,9 @@ public class Main extends Application {
     private final BorderPane border = new BorderPane();
     private final File credentialsFile = new File("credentials");
     private final File settingsFile = new File("settings.cfg");
-    private final File pricingFile = new File("Pricing.csv");
-    private ServicePricing pricing = null;
+    private final File pricingDir = new File("pricing\\");
+    private Set<File> pricingFiles;
+    private Map<Region,ServicePricing> pricings;
     //Bounds of the application
     private Rectangle2D primaryScreenBounds;
     private Map<String, TextField> fields;
@@ -128,7 +128,6 @@ public class Main extends Application {
     private int doneAreas = 0;
     @SuppressWarnings("FieldCanBeLocal")
     private String viewedRegion = "summary";
-    private Timer timer;
 
     private final ChangeListener<Boolean> dialogChangeListener = new ChangeListener<Boolean>() {
         @Override
@@ -163,22 +162,26 @@ public class Main extends Application {
         public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
             if (!(oldValue.equals(newValue))) {
                 int delayTime = 350;
-                TimerTask task = new TimerTask() {
+                Task<Void> task = new Task<Void>() {
                     @Override
-                    public void run() {
+                    protected Void call() throws Exception {
+                        Thread.sleep(delayTime);
                         primaryScreenBounds = Screen.getPrimary().getVisualBounds();
                         applicationHeight = mainStage.getHeight();
                         applicationWidth = mainStage.getWidth();
-                        dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
-                        dialog.setY(mainStage.getY() + mainStage.getHeight() / 2.75 - dialog.getHeight() / 2);
-                        dialog.show(mainStage);
+                        if(dialog!=null) {
+                            dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
+                            dialog.setY(mainStage.getY() + mainStage.getHeight() / 2.75 - dialog.getHeight() / 2);
+                            dialog.show(mainStage);
+                        }
                         Platform.runLater(Main.this::updatePainting);
                         Platform.runLater(() -> border.setTop(createTop()));
                         Platform.runLater(() -> border.setBottom(createBottom()));
                         Platform.runLater(() -> border.setLeft(createLeft()));
+                        return null;
                     }
                 };
-                timer.schedule(task, delayTime);
+                new Thread(task).start();
             }
         }
     };
@@ -230,9 +233,6 @@ public class Main extends Application {
         simplePBEConfig.setKeyObtentionIterations(1000);
         encryptor = new StandardPBEStringEncryptor();
         encryptor.setConfig(simplePBEConfig);
-
-        //Setup the timer that is used to trigger the redraw event
-        timer = new Timer();
 
         try {
             File logFile = new File("log.txt");
@@ -880,7 +880,8 @@ public class Main extends Application {
             redrawHook = true;
         }
         if (!viewedRegion.equals("summary")) {
-            int instancesWide = (int) (mainStage.getWidth() / (ServiceDraw.serviceWidth + 20));
+            BigDecimal iW = new BigDecimal((((mainStage.getWidth()) - 70)/ServiceDraw.serviceWidth));
+            int instancesWide = iW.intValue();
             drawServiceBoxes(instancesWide);
         } else {
             drawSummary();
@@ -924,7 +925,10 @@ public class Main extends Application {
                                 dialog.setAutoHide(true);
                                 dialog.show(mainStage);
                             });
-                            box.getChildren().add(graph);
+                            VBox graphBox = new VBox(graph);
+                            graphBox.setPrefHeight(ServiceDraw.serviceHeight/2);
+                            graphBox.setAlignment(Pos.BOTTOM_CENTER);
+                            box.getChildren().add(graphBox);
                         }
 
                         if (viewedRegion.equals("all")) {
@@ -1181,14 +1185,12 @@ public class Main extends Application {
         logger.debug("Total areas: " + totalAreas);
 
 
-        //Setup the pricing system
-        if (pricingFile.exists() && pricing == null) {
-            pricing = new ServicePricing(pricingFile, logger);
-        }
+        readPricingDir();
+
 
         accounts = new ArrayList<>();
         for (AmazonCredentials credential : credentials) {
-            AmazonAccount thisController = new AmazonAccount(credential, currentRegions, logger, pricing);
+            AmazonAccount thisController = new AmazonAccount(credential, currentRegions, logger, pricings);
             thisController.getCompleted().addListener(new ChangeListener<Number>() {
                 @Override
                 public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
@@ -1215,7 +1217,6 @@ public class Main extends Application {
                 }
             });
             accounts.add(thisController);
-            //TODO: Figure out good way to describe the threading
             Task task = new Task<Void>() {
                 protected Void call() throws Exception {
                     thisController.startConfigure();
@@ -1223,6 +1224,31 @@ public class Main extends Application {
                 }
             };
             new Thread(task).start();
+        }
+    }
+
+    private void readPricingDir(){
+        pricings = new HashMap<>();
+        if(!pricingDir.exists()){
+            logger.error("No pricings directory");
+            return;
+        }
+        if(pricingDir.listFiles() != null) {
+            pricingFiles = new HashSet<>(Arrays.asList(pricingDir.listFiles()));
+        } else {
+            logger.error("Pricing directory is empty");
+            return;
+        }
+        for(File f : pricingFiles){
+            String[] nameSplit = f.getName().split(" ");
+            String regionName = nameSplit[0];
+            if(Service.regionNames().containsKey(regionName)){
+                Region thisRegion = Region.getRegion(Regions.fromName(regionName));
+                pricings.put(thisRegion,new ServicePricing(f,logger,thisRegion));
+                logger.debug("Got pricing for: " + Region.getRegion(Regions.fromName(regionName)).getName());
+            } else {
+                logger.warn("Invalid region: " + regionName);
+            }
         }
     }
 
@@ -1640,8 +1666,10 @@ public class Main extends Application {
         HBox runningRedshiftBox = guiFactory.labelAndField("Running Redshift: ", "" + runningRedshift, textWidth, labelWidth, styleClass);
         c.add(runningRedshiftBox);
 
-        HBox runningCostsBox = guiFactory.labelAndField("Running Costs ($/hr): ", "$" + String.format("%.2f", round(runningCosts, 2)), textWidth, labelWidth, styleClass);
-        c.add(runningCostsBox);
+        if(pricings.size()!=0) {
+            HBox runningCostsBox = guiFactory.labelAndField("Running Costs ($/hr): ", "$" + String.format("%.2f", round(runningCosts, 2)), textWidth, labelWidth, styleClass);
+            c.add(runningCostsBox);
+        }
 
         List<Node> b = new ArrayList<>();
 
@@ -1685,9 +1713,12 @@ public class Main extends Application {
 
             HBox accountRedshiftBox = guiFactory.labelAndField("Running Redshift: ", "" + thisRunningRedshift, textWidth, labelWidth, styleClass);
 
-            HBox accountCostsBox = guiFactory.labelAndField("Current Costs ($/hr): ", "$" + String.format("%.2f",round(thisRunningCosts,2)), textWidth, labelWidth, styleClass);
+            VBox thisAccountStats = new VBox(accountTitle, allServicesBox, allRunningBox, space2, accountEc2Box, accountRDSBox, accountRedshiftBox);
+            if(pricings.size()!=0) {
+                HBox accountCostsBox = guiFactory.labelAndField("Current Costs ($/hr): ", "$" + String.format("%.2f", round(thisRunningCosts, 2)), textWidth, labelWidth, styleClass);
+                thisAccountStats.getChildren().add(accountCostsBox);
+            }
 
-            VBox thisAccountStats = new VBox(accountTitle, allServicesBox, allRunningBox, space2, accountEc2Box, accountRDSBox, accountRedshiftBox, accountCostsBox);
             thisAccountStats.setMinWidth(statisticsBoxWidth);
             thisAccountStats.getStylesheets().add(styleSheet);
             thisAccountStats.getStyleClass().add("centreStyle");

@@ -23,7 +23,7 @@ public class ServiceDraw {
     public static final int buttonWidth = 190;
     public static final int buttonHeight = 20;
     public static final int serviceWidth = 260;
-    public static final int serviceHeight = 205;
+    public static final int serviceHeight = 215;
     public static final int labelWidth = serviceWidth / 2;
     public static final int textWidth = serviceWidth - labelWidth;
     private final String stylesheet;
@@ -33,16 +33,23 @@ public class ServiceDraw {
     }
 
     public VBox drawOne(Service service) {
+        VBox drawing = null;
         if (service.serviceType().equalsIgnoreCase("ec2")) {
-            return drawEc2(service);
+            drawing =  drawEc2(service);
         } else if (service.serviceType().equalsIgnoreCase("rds")) {
-            return drawRDS(service);
+            drawing = drawRDS(service);
         } else if (service.serviceType().equalsIgnoreCase("redshift")) {
-            return drawRedshift(service);
-
+            drawing = drawRedshift(service);
         } else {
-            return drawGeneric(service);
+            drawing = drawGeneric(service);
         }
+        drawing.setMinHeight(serviceHeight);
+        drawing.setMaxHeight(serviceHeight);
+
+        drawing.setMinWidth(serviceWidth);
+        drawing.setMaxWidth(serviceWidth);
+
+        return drawing;
     }
 
     private VBox drawGeneric(Service service) {
@@ -107,7 +114,7 @@ public class ServiceDraw {
         drawing.setAlignment(Pos.TOP_CENTER);
         drawing.setPrefHeight(serviceHeight);
 
-        drawing.setPrefWidth(serviceWidth);
+        drawing.setMinWidth(serviceWidth);
         drawing.getStylesheets().add(stylesheet);
         drawing.getStyleClass().add("instance");
         return drawing;
@@ -207,7 +214,7 @@ public class ServiceDraw {
                 instancePricingLabel.setPrefWidth(labelWidth);
                 instancePricingLabel.setAlignment(Pos.CENTER_RIGHT);
                 instancePricingLabel.getStyleClass().add("guiLabel");
-                Label instancePricing = new Label("Not found");
+                Label instancePricing = new Label("Unknown");
                 instancePricing.setPrefWidth(labelWidth);
 
                 HBox pricingBox = new HBox(instancePricingLabel, instancePricing);
@@ -233,9 +240,9 @@ public class ServiceDraw {
 
         drawing.getChildren().addAll(c);
         drawing.setAlignment(Pos.TOP_CENTER);
-        drawing.setPrefHeight(serviceHeight);
 
-        drawing.setPrefWidth(serviceWidth);
+        drawing.setMinWidth(serviceWidth);
+        drawing.setMinHeight(serviceHeight);
         drawing.getStylesheets().add(stylesheet);
         drawing.getStyleClass().add("instance");
         return drawing;
@@ -335,7 +342,7 @@ public class ServiceDraw {
                 instancePricingLabel.setPrefWidth(labelWidth);
                 instancePricingLabel.setAlignment(Pos.CENTER_RIGHT);
                 instancePricingLabel.getStyleClass().add("guiLabel");
-                Label instancePricing = new Label("Not found");
+                Label instancePricing = new Label("Unknown");
                 instancePricing.setPrefWidth(labelWidth);
 
                 HBox pricingBox = new HBox(instancePricingLabel, instancePricing);
@@ -361,9 +368,9 @@ public class ServiceDraw {
 
         drawing.getChildren().addAll(c);
         drawing.setAlignment(Pos.TOP_CENTER);
-        drawing.setPrefHeight(serviceHeight);
 
-        drawing.setPrefWidth(serviceWidth);
+        drawing.setMinWidth(serviceWidth);
+        drawing.setMinHeight(serviceHeight);
         drawing.getStylesheets().add(stylesheet);
         drawing.getStyleClass().add("instance");
         return drawing;
@@ -463,7 +470,7 @@ public class ServiceDraw {
                 instancePricingLabel.setPrefWidth(labelWidth);
                 instancePricingLabel.setAlignment(Pos.CENTER_RIGHT);
                 instancePricingLabel.getStyleClass().add("guiLabel");
-                Label instancePricing = new Label("Not found");
+                Label instancePricing = new Label("Unknown");
                 instancePricing.setPrefWidth(labelWidth);
 
                 HBox pricingBox = new HBox(instancePricingLabel, instancePricing);
@@ -489,9 +496,9 @@ public class ServiceDraw {
 
         drawing.getChildren().addAll(c);
         drawing.setAlignment(Pos.TOP_CENTER);
-        drawing.setPrefHeight(serviceHeight);
 
-        drawing.setPrefWidth(serviceWidth);
+        drawing.setPrefHeight(serviceHeight);
+        drawing.setMinWidth(serviceWidth);
         drawing.getStylesheets().add(stylesheet);
         drawing.getStyleClass().add("instance");
         return drawing;

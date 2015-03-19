@@ -108,7 +108,7 @@
     -fx-font-family: "Droid Sans";
     -fx-font-size: 18px;
     -fx-text-fill: black;
-    -fx-spacing: 0;
+    -fx-spacing: 1;
     -fx-padding: 5;
     -fx-border-color: #faa61a;
     -fx-background-color: #EEE;
@@ -269,7 +269,7 @@
 .rdsTitle{
     -fx-font-family: "Droid Sans";
     -fx-font-size: 26px;
-    -fx-text-fill: green;
+    -fx-text-fill: darkblue;
 }
 
 .testInstanceTitle{

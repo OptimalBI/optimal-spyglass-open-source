@@ -13,7 +13,7 @@ EC2,c3.xlarge,0.265
 EC2,c3.2xlarge,0.529
 EC2,c3.4xlarge,1.058
 EC2,c3.8xlarge,2.117
-EC@,c4.large,0.152
+EC2,c4.large,0.152
 EC2,c4.xlarge,0.304
 EC2,c4.2xlarge,0.608
 EC2,c4.4xlarge,1.216
