@@ -53,7 +53,6 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -104,7 +103,7 @@ public class Main extends Application {
     private final File settingsFile = new File("settings.cfg");
     private final File pricingDir = new File("pricing\\");
     private Set<File> pricingFiles;
-    private Map<Region,ServicePricing> pricings;
+    private Map<Region, ServicePricing> pricings;
     //Bounds of the application
     private Rectangle2D primaryScreenBounds;
     private Map<String, TextField> fields;
@@ -129,30 +128,6 @@ public class Main extends Application {
     @SuppressWarnings("FieldCanBeLocal")
     private String viewedRegion = "summary";
 
-    private final ChangeListener<Boolean> dialogChangeListener = new ChangeListener<Boolean>() {
-        @Override
-        public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-            if(newValue) {
-                if(dialog!=null) {
-                    dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
-                    dialog.setY(mainStage.getY() + mainStage.getHeight() / 2.75 - dialog.getHeight() / 2);
-                    dialog.show(mainStage);
-                }
-            }
-        }
-    };
-
-    private final EventHandler<MouseEvent> dialogClicker = new EventHandler<MouseEvent>() {
-        @Override
-        public void handle(MouseEvent event) {
-            if(dialog!=null) {
-                dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
-                dialog.setY(mainStage.getY() + mainStage.getHeight() / 2.75 - dialog.getHeight() / 2);
-                dialog.show(mainStage);
-            }
-        }
-    };
-
     private final ChangeListener<Number> paintListener = new ChangeListener<Number>() {
         /*
          *   Creates a delayed draw event which will create a new thread and wait for delayTime number of seconds
@@ -169,12 +144,12 @@ public class Main extends Application {
                         primaryScreenBounds = Screen.getPrimary().getVisualBounds();
                         applicationHeight = mainStage.getHeight();
                         applicationWidth = mainStage.getWidth();
-                        if(dialog!=null) {
+                        if (dialog != null) {
                             dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
                             dialog.setY(mainStage.getY() + mainStage.getHeight() / 2.75 - dialog.getHeight() / 2);
                             dialog.show(mainStage);
                         }
-                        Platform.runLater(Main.this::updatePainting);
+                        Platform.runLater(Main.this::updatePaintingBoxes);
                         Platform.runLater(() -> border.setTop(createTop()));
                         Platform.runLater(() -> border.setBottom(createBottom()));
                         Platform.runLater(() -> border.setLeft(createLeft()));
@@ -257,16 +232,12 @@ public class Main extends Application {
         mainStage.setTitle("OptimalSpyglass");
         mainStage.show();
 
-        //If the mainStage becomes focused redraw the hidden popup
-        mainStage.focusedProperty().addListener(dialogChangeListener);
-
         logger.info("Hello chaps");
 
         //Process the settings file
         loadSettings();
 
         border.setTop(createTop());
-        border.focusedProperty().addListener(dialogChangeListener);
 
         //Load access keys from file, if they don't exist ask for them
         //TODO: check if keys are valid on load
@@ -283,9 +254,11 @@ public class Main extends Application {
         }
         resetDialog();
         ArrayList<Node> c = new ArrayList<>();
+        Pos alignment = Pos.BASELINE_LEFT;
 
         //Prompt Text
         Label promptLabel = new Label("Please enter the password you want use for this application");
+        promptLabel.setAlignment(alignment);
         c.add(promptLabel);
 
         //Fail Text
@@ -298,21 +271,21 @@ public class Main extends Application {
         //TextField
         Label fLabel = new Label("Password:");
         fLabel.setMinWidth(120);
-        fLabel.setAlignment(Pos.CENTER_LEFT);
+        fLabel.setAlignment(alignment);
         PasswordField field = new PasswordField();
         field.setMinWidth(160);
         HBox fBox = new HBox(fLabel, field);
-        fBox.setAlignment(Pos.CENTER_LEFT);
+        fBox.setAlignment(alignment);
 
 
         //TextField2
         Label sFLabel = new Label("Confirmation:");
         sFLabel.setMinWidth(120);
-        sFLabel.setAlignment(Pos.CENTER_LEFT);
+        sFLabel.setAlignment(alignment);
         PasswordField secondField = new PasswordField();
         secondField.setMinWidth(160);
         HBox sFBox = new HBox(sFLabel, secondField);
-        sFBox.setAlignment(Pos.CENTER_LEFT);
+        sFBox.setAlignment(alignment);
 
         c.add(fBox);
         c.add(sFBox);
@@ -321,7 +294,7 @@ public class Main extends Application {
         Button okBtn = guiFactory.createButton("Okay", 120, 12);
         HBox btnBox = new HBox(okBtn);
         btnBox.setMinWidth(applicationWidth / 3.2);
-        btnBox.setAlignment(Pos.BOTTOM_RIGHT);
+        btnBox.setAlignment(alignment);
 
         c.add(btnBox);
 
@@ -350,15 +323,21 @@ public class Main extends Application {
         okBtn.setOnAction(go);
 
         VBox layout = new VBox();
+        layout.setAlignment(alignment);
         layout.getChildren().addAll(c);
         layout.getStylesheets().add(styleSheet);
         layout.getStyleClass().add("popup");
+        layout.setPrefSize(applicationWidth, applicationHeight);
 
-        dialog = guiFactory.setupDialog(applicationWidth / 3.2, applicationHeight / 2, layout);
-        dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
-        dialog.setY(mainStage.getY() + mainStage.getHeight() / 2 - dialog.getHeight() / 2);
-        dialog.show(mainStage);
-        dialog.setAutoHide(true);
+        setCentre(layout);
+
+//        dialog = guiFactory.setupDialog(applicationWidth / 3.2, applicationHeight / 2, layout);
+//        dialog.show(mainStage);
+//        dialog.setAutoHide(true);
+    }
+
+    private void setCentre(Node centre) {
+        border.setCenter(centre);
     }
 
     private void resetDialog() {
@@ -419,7 +398,7 @@ public class Main extends Application {
         Button okay = guiFactory.createButton("Okay", 120, 20);
         HBox buttonBox = new HBox(okay);
         buttonBox.setPrefWidth(applicationWidth / 3);
-        buttonBox.setAlignment(Pos.BOTTOM_RIGHT);
+        buttonBox.setAlignment(Pos.TOP_LEFT);
         c.add(buttonBox);
 
         EventHandler<ActionEvent> finishEvent = event -> {
@@ -428,8 +407,6 @@ public class Main extends Application {
             } else if (!matchPassword(passwordField.getText())) {
                 askForPassword("Password incorrect", attempts + 1);
             } else {
-                dialog.hide();
-                dialog = null;
                 decryptedPassword = passwordField.getText();
                 simplePBEConfig.setPassword(decryptedPassword);
                 encryptor.initialize();
@@ -453,10 +430,7 @@ public class Main extends Application {
         layout.getStylesheets().add(styleSheet);
         layout.setAlignment(Pos.TOP_LEFT);
 
-        resetDialog();
-        dialog = guiFactory.setupDialog(applicationWidth / 2, applicationHeight / 2, layout);
-        dialog.show(mainStage);
-        dialog.setAutoHide(true);
+        setCentre(layout);
 
         passwordField.requestFocus();
     }
@@ -473,7 +447,6 @@ public class Main extends Application {
         border.setTop(createTop());
         VBox centrePlaceHolder = new VBox();
         centrePlaceHolder.setPrefSize(applicationWidth, applicationHeight);
-        centrePlaceHolder.setOnMouseClicked(dialogClicker);
         border.setCenter(centrePlaceHolder);
 
         //Add gui sections to the stage
@@ -521,7 +494,7 @@ public class Main extends Application {
         //Change password
         Button changePassword = guiFactory.createButton("Change password");
         changePassword.setAlignment(Pos.BASELINE_LEFT);
-        changePassword.setOnAction(event -> changePassword());
+        changePassword.setOnAction(event -> changePassword(""));
         guiComponents.add(changePassword);
 
         //Exit button
@@ -545,12 +518,17 @@ public class Main extends Application {
         layout.setPrefHeight(applicationHeight);
         layout.getStylesheets().add("style.css");
         layout.getStyleClass().add("leftStyle");
-        layout.setOnMouseClicked(dialogClicker);
         return layout;
     }
 
-    private void changePassword() {
+    private void changePassword(String notification) {
         ArrayList<Node> c = new ArrayList<>();
+
+        //Notification Label
+        if (notification != null && !notification.equalsIgnoreCase("")) {
+            Label noti = new Label(notification);
+            c.add(noti);
+        }
 
         //Old password combo box
         Label oldPswdLabel = new Label("Old password: ");
@@ -568,6 +546,14 @@ public class Main extends Application {
         newPswdBox.setAlignment(Pos.CENTER_RIGHT);
         c.add(newPswdBox);
 
+        //New password combo box
+        Label newPswdLabe2 = new Label("Reenter password: ");
+        PasswordField newPswdField2 = new PasswordField();
+        newPswdField2.setMinWidth(buttonWidth * 1.5);
+        HBox newPswdBox2 = new HBox(newPswdLabe2, newPswdField2);
+        newPswdBox2.setAlignment(Pos.CENTER_RIGHT);
+        c.add(newPswdBox2);
+
         //Buttons
         Button okay = guiFactory.createButton("Okay", buttonWidth, 20);
         Button cancel = guiFactory.createButton("Cancel", buttonWidth, 20);
@@ -581,7 +567,11 @@ public class Main extends Application {
 
         EventHandler<ActionEvent> goEvent = event -> {
             if (oldPswdField.getText().equals(decryptedPassword)) {
-                decryptedPassword = newPswdField.getText();
+                if (!newPswdField.getText().equals(newPswdField2.getText())) {
+                    changePassword("Please enter the same password twice");
+                    return;
+                }
+                decryptedPassword = newPswdField2.getText();
 
                 //Setup the encryptor for Secret Keys
                 simplePBEConfig = new SimplePBEConfig();
@@ -592,7 +582,7 @@ public class Main extends Application {
                 encryptor.initialize();
 
                 PasswordEncryptor pe = new BasicPasswordEncryptor();
-                encryptedPassword = pe.encryptPassword(newPswdField.getText());
+                encryptedPassword = pe.encryptPassword(newPswdField2.getText());
 
                 saveSettings();
                 loadSettings();
@@ -605,11 +595,11 @@ public class Main extends Application {
             } else {
                 dialog.hide();
                 dialog = null;
-                changePassword();
+                changePassword("Old password incorrect");
             }
         };
         okay.setOnAction(goEvent);
-        newPswdField.setOnAction(goEvent);
+        newPswdField2.setOnAction(goEvent);
 
         VBox layout = new VBox();
         layout.getChildren().addAll(c);
@@ -618,6 +608,7 @@ public class Main extends Application {
 
         dialog = guiFactory.setupDialog(applicationWidth / 3, applicationHeight / 2, layout);
         dialog.show(mainStage);
+        oldPswdField.requestFocus();
         dialog.setAutoHide(true);
     }
 
@@ -634,7 +625,7 @@ public class Main extends Application {
         bottomLeft.setAlignment(Pos.BOTTOM_LEFT);
         bottomLeft.getStylesheets().add("style.css");
         bottomLeft.getStyleClass().add("botStyle");
-        bottomLeft.setPrefSize(applicationWidth / 2, 20);
+        bottomLeft.setPrefSize(applicationWidth, 20);
         bottomLeft.getChildren().add(cr);
         guiComponents.add(bottomLeft); //Add after debug output
 
@@ -648,7 +639,7 @@ public class Main extends Application {
         verTextBox.setAlignment(Pos.BOTTOM_RIGHT);
         verTextBox.getStylesheets().add("style.css");
         verTextBox.getStyleClass().add("botStyle");
-        verTextBox.setPrefSize(applicationWidth / 2, 20);
+        verTextBox.setPrefSize(applicationWidth, 20);
         verTextBox.getChildren().add(verText);
         guiComponents.add(verTextBox); //Add after debug output
 
@@ -657,7 +648,6 @@ public class Main extends Application {
         layout.getStyleClass().add("otherBotStyle");
         layout.setPrefSize(applicationWidth, 20);
         layout.setAlignment(Pos.BOTTOM_LEFT);
-        layout.setOnMouseClicked(dialogClicker);
         return layout;
     }
 
@@ -678,7 +668,6 @@ public class Main extends Application {
         layout.setPrefHeight(applicationHeight / 2);
         layout.getStylesheets().add("style.css");
         layout.getStyleClass().add("centreStyle");
-        layout.setOnMouseClicked(dialogClicker);
         return layout;
     }
 
@@ -772,8 +761,6 @@ public class Main extends Application {
 
         VBox outline = new VBox();
 
-        //If you click on the top and their is a dialog to show, display the dialog
-        outline.setOnMouseClicked(dialogClicker);
         outline.getChildren().addAll(topLayout, botLayout);
         return outline;
     }
@@ -821,14 +808,14 @@ public class Main extends Application {
         Button summary = guiFactory.createButton("Summary", -1, -1);
         summary.setOnAction(ActionEvent -> {
             viewedRegion = "summary";
-            updatePainting();
+            updatePaintingBoxes();
         });
         toolButtons.add(summary);
 
         Button all = guiFactory.createButton("All", -1, -1);
         all.setOnAction(ActionEvent -> {
             viewedRegion = "all";
-            updatePainting();
+            updatePaintingBoxes();
         });
         toolButtons.add(all);
 
@@ -849,7 +836,7 @@ public class Main extends Application {
             }
             adding.setOnAction(ActionEvent -> {
                 viewedRegion = region.getName();
-                updatePainting();
+                updatePaintingBoxes();
             });
             toolButtons.add(adding);
         }
@@ -860,12 +847,10 @@ public class Main extends Application {
 
         toolBar.getStyleClass().add("toolbar");
         toolBar.setPrefWidth(primaryScreenBounds.getWidth());
-        //If you click on the top and their is a dialog to show, display the dialog
-        toolBar.setOnMouseClicked(dialogClicker);
         return toolBar;
     }
 
-    private void updatePainting() {
+    private void updatePaintingBoxes() {
         if (!redrawHook) {
             //The first time we draw, hook the redraw listener to the changes in the Main's size
             Task task = new Task<Void>() {
@@ -880,7 +865,7 @@ public class Main extends Application {
             redrawHook = true;
         }
         if (!viewedRegion.equals("summary")) {
-            BigDecimal iW = new BigDecimal((((mainStage.getWidth()) - 70)/ServiceDraw.serviceWidth));
+            BigDecimal iW = new BigDecimal((((mainStage.getWidth()) - 70) / ServiceDraw.serviceWidth));
             int instancesWide = iW.intValue();
             drawServiceBoxes(instancesWide);
         } else {
@@ -926,7 +911,7 @@ public class Main extends Application {
                                 dialog.show(mainStage);
                             });
                             VBox graphBox = new VBox(graph);
-                            graphBox.setPrefHeight(ServiceDraw.serviceHeight/2);
+                            graphBox.setPrefHeight(ServiceDraw.serviceHeight / 2);
                             graphBox.setAlignment(Pos.BOTTOM_CENTER);
                             box.getChildren().add(graphBox);
                         }
@@ -970,7 +955,6 @@ public class Main extends Application {
         ScrollPane scrollPane = new ScrollPane(allInstances);
         scrollPane.setPannable(true);
         scrollPane.getStylesheets().add(styleSheet);
-        scrollPane.setOnMouseClicked(dialogClicker);
 
         //Makes sure this is applied on the main thread so the GUI doesn't throw a fit
         Platform.runLater(() -> border.setCenter(scrollPane));
@@ -979,6 +963,7 @@ public class Main extends Application {
     private void askForCredentials() {
         double textWidth = 160; //The minimum size the labels take up (aligns the Main)
         fields = new HashMap<>(); //Reset the fields collection so we can use it from the callback method
+        Pos alignment = Pos.TOP_LEFT;
 
         VBox outerLayout = new VBox();
         outerLayout.setPrefWidth(mainStage.getWidth() / 2);
@@ -994,7 +979,7 @@ public class Main extends Application {
         fields.put("account name", new TextField());
         fields.get("account name").setPrefWidth(outerLayout.getPrefWidth() - textWidth);
         HBox accountNameCombo = new HBox(accountNameTitle, fields.get("account name"));
-        accountNameCombo.setAlignment(Pos.CENTER_RIGHT);
+        accountNameCombo.setAlignment(alignment);
         c.add(accountNameCombo);
 
         //Access Key
@@ -1003,7 +988,7 @@ public class Main extends Application {
         fields.put("access key", new TextField());
         fields.get("access key").setPrefWidth(outerLayout.getPrefWidth() - textWidth);
         HBox accessKeyCombo = new HBox(accessKeyTitle, fields.get("access key"));
-        accessKeyCombo.setAlignment(Pos.CENTER_RIGHT);
+        accessKeyCombo.setAlignment(alignment);
         c.add(accessKeyCombo);
 
         //Secret Key
@@ -1013,7 +998,7 @@ public class Main extends Application {
         fields.get("secret key").setPrefWidth(outerLayout.getPrefWidth() - textWidth);
         fields.get("secret key").setOnAction(event -> saveCredentials());
         HBox secretKeyCombo = new HBox(secretKeyTitle, fields.get("secret key"));
-        secretKeyCombo.setAlignment(Pos.CENTER_RIGHT);
+        secretKeyCombo.setAlignment(alignment);
         c.add(secretKeyCombo);
 
         //Buttons
@@ -1032,19 +1017,22 @@ public class Main extends Application {
         });
         HBox buttons = new HBox(okay, cancel);
         buttons.setPrefWidth(outerLayout.getPrefWidth());
-        buttons.setAlignment(Pos.BASELINE_LEFT);
+        buttons.setAlignment(alignment);
         buttons.getStyleClass().add("subpopup");
         c.add(buttons);
 
         outerLayout.getStylesheets().add(styleSheet);
         outerLayout.getStyleClass().add("popup");
         outerLayout.getChildren().addAll(c);
+        outerLayout.setAlignment(alignment);
 
-        dialog = guiFactory.setupDialog(-1, -1, outerLayout);
-        dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
-        dialog.setY(mainStage.getY() + mainStage.getHeight() / 2 - dialog.getHeight() / 2);
-        dialog.show(mainStage);
-        dialog.setAutoHide(true);
+        setCentre(outerLayout);
+
+//        dialog = guiFactory.setupDialog(-1, -1, outerLayout);
+//        dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
+//        dialog.setY(mainStage.getY() + mainStage.getHeight() / 2 - dialog.getHeight() / 2);
+//        dialog.show(mainStage);
+//        dialog.setAutoHide(true);
     }
 
     private void saveCredentials() {
@@ -1079,8 +1067,6 @@ public class Main extends Application {
                 writer.flush();
                 writer.close();
             }
-            dialog.hide();
-            dialog = null;
             fields = null;
         }
 
@@ -1212,7 +1198,7 @@ public class Main extends Application {
                     }
                     //If all controllers are ready then draw the Main
                     if (ready) {
-                        updatePainting();
+                        updatePaintingBoxes();
                     }
                 }
             });
@@ -1227,24 +1213,24 @@ public class Main extends Application {
         }
     }
 
-    private void readPricingDir(){
+    private void readPricingDir() {
         pricings = new HashMap<>();
-        if(!pricingDir.exists()){
+        if (!pricingDir.exists()) {
             logger.error("No pricings directory");
             return;
         }
-        if(pricingDir.listFiles() != null) {
+        if (pricingDir.listFiles() != null) {
             pricingFiles = new HashSet<>(Arrays.asList(pricingDir.listFiles()));
         } else {
             logger.error("Pricing directory is empty");
             return;
         }
-        for(File f : pricingFiles){
+        for (File f : pricingFiles) {
             String[] nameSplit = f.getName().split(" ");
             String regionName = nameSplit[0];
-            if(Service.regionNames().containsKey(regionName)){
+            if (Service.regionNames().containsKey(regionName)) {
                 Region thisRegion = Region.getRegion(Regions.fromName(regionName));
-                pricings.put(thisRegion,new ServicePricing(f,logger,thisRegion));
+                pricings.put(thisRegion, new ServicePricing(f, logger, thisRegion));
                 logger.debug("Got pricing for: " + Region.getRegion(Regions.fromName(regionName)).getName());
             } else {
                 logger.warn("Invalid region: " + regionName);
@@ -1296,16 +1282,15 @@ public class Main extends Application {
         //Add button
         Button add = guiFactory.createButton("Add", buttonWidth, buttonHeight / 2);
         add.setOnAction(event -> {
-            dialog.hide();
-            dialog = null;
+            resetDialog();
             askForCredentials();
         });
 
         //Close button
         Button close = guiFactory.createButton("Close", buttonWidth, buttonHeight / 2);
         close.setOnAction(event -> {
-            dialog.hide();
-            dialog = null;
+            updatePaintingBoxes();
+            resetDialog();
         });
         HBox buttons = new HBox(add, close);
         buttons.getStyleClass().add("subpopup");
@@ -1320,9 +1305,11 @@ public class Main extends Application {
         //Config anything that need to go all the way across the gui
         buttons.setPrefWidth(allCredentials.getPrefWidth());
 
-        dialog = guiFactory.setupDialog(-1, -1, allCredentials);
-        dialog.show(mainStage);
-        dialog.setAutoHide(true);
+        setCentre(allCredentials);
+
+//        dialog = guiFactory.setupDialog(-1, -1, allCredentials);
+//        dialog.show(mainStage);
+//        dialog.setAutoHide(true);
     }
 
     private void selectRegions() {
@@ -1666,7 +1653,7 @@ public class Main extends Application {
         HBox runningRedshiftBox = guiFactory.labelAndField("Running Redshift: ", "" + runningRedshift, textWidth, labelWidth, styleClass);
         c.add(runningRedshiftBox);
 
-        if(pricings.size()!=0) {
+        if (pricings.size() != 0) {
             HBox runningCostsBox = guiFactory.labelAndField("Running Costs ($/hr): ", "$" + String.format("%.2f", round(runningCosts, 2)), textWidth, labelWidth, styleClass);
             c.add(runningCostsBox);
         }
@@ -1714,7 +1701,7 @@ public class Main extends Application {
             HBox accountRedshiftBox = guiFactory.labelAndField("Running Redshift: ", "" + thisRunningRedshift, textWidth, labelWidth, styleClass);
 
             VBox thisAccountStats = new VBox(accountTitle, allServicesBox, allRunningBox, space2, accountEc2Box, accountRDSBox, accountRedshiftBox);
-            if(pricings.size()!=0) {
+            if (pricings.size() != 0) {
                 HBox accountCostsBox = guiFactory.labelAndField("Current Costs ($/hr): ", "$" + String.format("%.2f", round(thisRunningCosts, 2)), textWidth, labelWidth, styleClass);
                 thisAccountStats.getChildren().add(accountCostsBox);
             }
