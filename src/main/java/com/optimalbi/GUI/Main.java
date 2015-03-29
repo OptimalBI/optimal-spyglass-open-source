@@ -11,7 +11,6 @@ package com.optimalbi.GUI;
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
  */
@@ -93,23 +92,20 @@ public class Main extends Application {
     private static double applicationHeight;
     private static double applicationWidth;
     private static Stage mainStage;
-
     //Gui Components
-    private final double buttonWidth = 240;
+    private final double buttonWidth = 210;
     private final double buttonHeight = 60;
     private final String styleSheet = "style.css";
     private final BorderPane border = new BorderPane();
     private final File credentialsFile = new File("credentials");
     private final File settingsFile = new File("settings.cfg");
     private final File pricingDir = new File("pricing\\");
-    private Set<File> pricingFiles;
     private Map<Region, ServicePricing> pricings;
     //Bounds of the application
     private Rectangle2D primaryScreenBounds;
     private Map<String, TextField> fields;
     private Logger logger;
     private Popup dialog;
-
     private TjfxFactory guiFactory;
     private ProgressBar progressBar = null;
     private List<AmazonCredentials> credentials;
@@ -349,14 +345,15 @@ public class Main extends Application {
 
     private void askForPassword(String promptText, int attempts) {
         double textWidth = 160; //The minimum size the labels take up (aligns the Main)
+        double boxWidth = 240;
         fields = new HashMap<>(); //Reset the fields collection so we can use it from the callback method
         VBox layout = new VBox();
-        layout.setPrefWidth(applicationWidth / 3);
 
         ArrayList<Node> c = new ArrayList<>();
 
         //Prompt text
-        Text prompt = new Text(promptText);
+        Label prompt = new Label(promptText);
+        prompt.setMinWidth(textWidth+boxWidth+5);
         c.add(prompt);
 
         //Attempts text
@@ -380,6 +377,7 @@ public class Main extends Application {
         }
         if (!caution.equals("")) {
             Label cautionText = new Label(caution);
+            cautionText.setMinWidth(textWidth+boxWidth+5);
             cautionText.setTextFill(Color.ORANGE);
             c.add(cautionText);
         }
@@ -389,16 +387,16 @@ public class Main extends Application {
         Label passwordBoxTitle = new Label("Password: ");
         passwordBoxTitle.setPrefWidth(textWidth);
         PasswordField passwordField = new PasswordField();
-        passwordField.setPrefWidth(layout.getPrefWidth() - textWidth);
+        passwordField.setPrefWidth(boxWidth);
         HBox passwordCombo = new HBox(passwordBoxTitle, passwordField);
-        passwordCombo.setAlignment(Pos.BASELINE_LEFT);
+        passwordCombo.setAlignment(Pos.CENTER);
         c.add(passwordCombo);
 
         //Button
         Button okay = guiFactory.createButton("Okay", 120, 20);
         HBox buttonBox = new HBox(okay);
-        buttonBox.setPrefWidth(applicationWidth / 3);
-        buttonBox.setAlignment(Pos.TOP_LEFT);
+        buttonBox.setPrefWidth(textWidth+boxWidth+5);
+        buttonBox.setAlignment(Pos.BOTTOM_RIGHT);
         c.add(buttonBox);
 
         EventHandler<ActionEvent> finishEvent = event -> {
@@ -426,9 +424,10 @@ public class Main extends Application {
 
 
         layout.getChildren().addAll(c);
-        layout.getStyleClass().add("popup");
+        layout.getStyleClass().add("settings");
         layout.getStylesheets().add(styleSheet);
-        layout.setAlignment(Pos.TOP_LEFT);
+        layout.setMaxWidth(textWidth+boxWidth);
+        layout.setAlignment(Pos.CENTER);
 
         setCentre(layout);
 
@@ -523,6 +522,10 @@ public class Main extends Application {
 
     private void changePassword(String notification) {
         ArrayList<Node> c = new ArrayList<>();
+        Pos alignment = Pos.CENTER;
+
+        double textWidth = 200;
+        double boxWidth = 240;
 
         //Notification Label
         if (notification != null && !notification.equalsIgnoreCase("")) {
@@ -532,37 +535,42 @@ public class Main extends Application {
 
         //Old password combo box
         Label oldPswdLabel = new Label("Old password: ");
+        oldPswdLabel.setMinWidth(textWidth);
         PasswordField oldPswdField = new PasswordField();
-        oldPswdField.setMinWidth(buttonWidth * 1.5);
+        oldPswdField.setMinWidth(boxWidth);
         HBox oldPswdBox = new HBox(oldPswdLabel, oldPswdField);
-        oldPswdBox.setAlignment(Pos.CENTER_RIGHT);
+        oldPswdBox.setAlignment(alignment);
         c.add(oldPswdBox);
 
         //New password combo box
         Label newPswdLabel = new Label("New password: ");
+        newPswdLabel.setMinWidth(textWidth);
         PasswordField newPswdField = new PasswordField();
-        newPswdField.setMinWidth(buttonWidth * 1.5);
+        newPswdField.setMinWidth(boxWidth);
         HBox newPswdBox = new HBox(newPswdLabel, newPswdField);
-        newPswdBox.setAlignment(Pos.CENTER_RIGHT);
+        newPswdBox.setAlignment(alignment);
         c.add(newPswdBox);
 
         //New password combo box
-        Label newPswdLabe2 = new Label("Reenter password: ");
+        Label newPswdLabe2 = new Label("Confirm password: ");
+        newPswdLabe2.setMinWidth(textWidth);
         PasswordField newPswdField2 = new PasswordField();
-        newPswdField2.setMinWidth(buttonWidth * 1.5);
+        newPswdField2.setMinWidth(boxWidth);
         HBox newPswdBox2 = new HBox(newPswdLabe2, newPswdField2);
-        newPswdBox2.setAlignment(Pos.CENTER_RIGHT);
+        newPswdBox2.setAlignment(alignment);
         c.add(newPswdBox2);
 
         //Buttons
-        Button okay = guiFactory.createButton("Okay", buttonWidth, 20);
-        Button cancel = guiFactory.createButton("Cancel", buttonWidth, 20);
+        Button okay = guiFactory.createButton("Okay", (textWidth+boxWidth)/2, 20);
+        Button cancel = guiFactory.createButton("Cancel", (textWidth+boxWidth)/2, 20);
         cancel.setOnAction(event -> {
-            dialog.hide();
-            dialog = null;
+            viewedRegion = "summary";
+            updatePaintingBoxes();
         });
         HBox buttons = new HBox(okay, cancel);
-        buttons.getStyleClass().add("subpopup");
+        buttons.getStyleClass().add("popupButtons");
+        buttons.setPrefWidth(boxWidth + textWidth);
+        buttons.setAlignment(alignment);
         c.add(buttons);
 
         EventHandler<ActionEvent> goEvent = event -> {
@@ -604,12 +612,14 @@ public class Main extends Application {
         VBox layout = new VBox();
         layout.getChildren().addAll(c);
         layout.getStylesheets().add(styleSheet);
-        layout.getStyleClass().add("popup");
+        layout.getStyleClass().add("settings");
+        layout.setAlignment(Pos.CENTER);
+        layout.setMaxWidth(boxWidth + textWidth + 5);
+        layout.setMaxHeight(oldPswdField.getHeight() * 4);
+        layout.autosize();
 
-        dialog = guiFactory.setupDialog(applicationWidth / 3, applicationHeight / 2, layout);
-        dialog.show(mainStage);
+        setCentre(layout);
         oldPswdField.requestFocus();
-        dialog.setAutoHide(true);
     }
 
     private HBox createBottom() {
@@ -1006,13 +1016,12 @@ public class Main extends Application {
         okay.setOnAction(event -> saveCredentials());
         Button cancel = guiFactory.createButton("Cancel", buttonWidth, buttonHeight / 2);
         cancel.setOnAction(event -> {
-            dialog.hide();
-            dialog = null;
-            fields = null;
-
             //If there are no credentials entered exit the app
             if (credentials == null || credentials.size() == 0) {
                 System.exit(404);
+            } else {
+                viewedRegion = "summary";
+                updatePaintingBoxes();
             }
         });
         HBox buttons = new HBox(okay, cancel);
@@ -1219,6 +1228,7 @@ public class Main extends Application {
             logger.error("No pricings directory");
             return;
         }
+        Set<File> pricingFiles;
         if (pricingDir.listFiles() != null) {
             pricingFiles = new HashSet<>(Arrays.asList(pricingDir.listFiles()));
         } else {

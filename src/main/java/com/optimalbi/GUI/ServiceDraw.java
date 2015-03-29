@@ -23,7 +23,7 @@ public class ServiceDraw {
     public static final int buttonWidth = 190;
     public static final int buttonHeight = 20;
     public static final int serviceWidth = 260;
-    public static final int serviceHeight = 250;
+    public static final int serviceHeight = 235;
     public static final int labelWidth = serviceWidth / 2;
     public static final int textWidth = serviceWidth - labelWidth;
     private final String stylesheet;

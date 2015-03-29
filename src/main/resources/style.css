@@ -136,7 +136,6 @@
     -fx-font-family: "Droid Sans";
     -fx-font-size: 12px;
     -fx-text-fill: #000000;
-    -fx-background-color: #EEE;
 }
 .popupButtons {
     -fx-spacing: 0;
@@ -156,6 +155,14 @@
     -fx-padding: 10;
     -fx-border-color: #FFCE71;
     -fx-background-color:#FFFFFF;
+}
+
+.settings {
+    -fx-font-family: "Droid Sans";
+    -fx-font-size: 18px;
+    -fx-text-fill: #000000;
+    -fx-spacing: 10;
+    -fx-padding: 10;
 }
 
 .toolbarLabel{
