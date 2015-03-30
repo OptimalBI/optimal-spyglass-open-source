@@ -1,9 +1,11 @@
 package com.optimalbi.GUI;
 
 import com.optimalbi.AmazonAccount;
+import com.optimalbi.GUI.TjfxFactory.GuiButton;
 import com.optimalbi.Services.Service;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -23,7 +25,7 @@ public class ServiceDraw {
     public static final int buttonWidth = 190;
     public static final int buttonHeight = 20;
     public static final int serviceWidth = 260;
-    public static final int serviceHeight = 235;
+    public static final int serviceHeight = 245;
     public static final int labelWidth = serviceWidth / 2;
     public static final int textWidth = serviceWidth - labelWidth;
     private final String stylesheet;
@@ -32,14 +34,14 @@ public class ServiceDraw {
         this.stylesheet = stylesheet;
     }
 
-    public VBox drawOne(Service service) {
+    public VBox drawOne(Service service, GuiButton... buttons) {
         VBox drawing = null;
         if (service.serviceType().equalsIgnoreCase("ec2")) {
-            drawing =  drawEc2(service);
+            drawing =  drawEc2(service, buttons);
         } else if (service.serviceType().equalsIgnoreCase("rds")) {
             drawing = drawRDS(service);
         } else if (service.serviceType().equalsIgnoreCase("redshift")) {
-            drawing = drawRedshift(service);
+            drawing = drawRedshift(service, buttons);
         } else {
             drawing = drawGeneric(service);
         }
@@ -120,7 +122,7 @@ public class ServiceDraw {
         return drawing;
     }
 
-    private VBox drawEc2(Service service) {
+    private VBox drawEc2(Service service, GuiButton... buttons) {
         VBox drawing = new VBox();
 
         Pos align = Pos.CENTER;
@@ -238,6 +240,9 @@ public class ServiceDraw {
         }
         c.add(instanceState);
 
+        HBox buttonBox = createButtons(buttons);
+        c.add(buttonBox);
+
         drawing.getChildren().addAll(c);
         drawing.setAlignment(Pos.TOP_CENTER);
 
@@ -248,7 +253,7 @@ public class ServiceDraw {
         return drawing;
     }
 
-    private VBox drawRDS(Service service) {
+    private VBox drawRDS(Service service, GuiButton... buttons) {
         VBox drawing = new VBox();
 
         Pos align = Pos.CENTER;
@@ -366,6 +371,9 @@ public class ServiceDraw {
         }
         c.add(instanceState);
 
+        HBox buttonBox = createButtons(buttons);
+        c.add(buttonBox);
+
         drawing.getChildren().addAll(c);
         drawing.setAlignment(Pos.TOP_CENTER);
 
@@ -376,7 +384,7 @@ public class ServiceDraw {
         return drawing;
     }
 
-    private VBox drawRedshift(Service service) {
+    private VBox drawRedshift(Service service, GuiButton... buttons) {
         VBox drawing = new VBox();
 
         Pos align = Pos.CENTER;
@@ -494,6 +502,9 @@ public class ServiceDraw {
         }
         c.add(instanceState);
 
+        HBox buttonBox = createButtons(buttons);
+        c.add(buttonBox);
+
         drawing.getChildren().addAll(c);
         drawing.setAlignment(Pos.TOP_CENTER);
 
@@ -536,5 +547,28 @@ public class ServiceDraw {
         regionNames.put("us-west-2", "US West (Oregon)");
 
         return regionNames;
+    }
+
+    private HBox createButtons(GuiButton... buttons){
+        ArrayList<Node> c = new ArrayList<>();
+        for (GuiButton b : buttons){
+            Button button;
+            if(b.display() == null){
+                button = new Button(b.name());
+            } else {
+                button = new Button("",b.display());
+            }
+            if(b.command() != null){
+                button.setOnAction(event->{
+                    b.command().run();
+                });
+            }
+            c.add(button);
+        }
+        HBox hbox = new HBox();
+        hbox.getChildren().addAll(c);
+        hbox.setAlignment(Pos.BOTTOM_CENTER);
+        hbox.setMaxWidth(serviceWidth);
+        return hbox;
     }
 }

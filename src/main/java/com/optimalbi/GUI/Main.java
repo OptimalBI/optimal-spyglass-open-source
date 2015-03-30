@@ -26,6 +26,7 @@ import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsResult;
 import com.optimalbi.AmazonAccount;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
 import com.optimalbi.Controller.Containers.AmazonRegion;
+import com.optimalbi.GUI.TjfxFactory.PictureButton;
 import com.optimalbi.GUI.TjfxFactory.TjfxFactory;
 import com.optimalbi.ServicePricing;
 import com.optimalbi.Services.Service;
@@ -344,7 +345,7 @@ public class Main extends Application {
     }
 
     private void askForPassword(String promptText, int attempts) {
-        double textWidth = 160; //The minimum size the labels take up (aligns the Main)
+        double textWidth = 120; //The minimum size the labels take up (aligns the Main)
         double boxWidth = 240;
         fields = new HashMap<>(); //Reset the fields collection so we can use it from the callback method
         VBox layout = new VBox();
@@ -353,7 +354,7 @@ public class Main extends Application {
 
         //Prompt text
         Label prompt = new Label(promptText);
-        prompt.setMinWidth(textWidth+boxWidth+5);
+        prompt.setMinWidth(textWidth + boxWidth);
         c.add(prompt);
 
         //Attempts text
@@ -377,7 +378,7 @@ public class Main extends Application {
         }
         if (!caution.equals("")) {
             Label cautionText = new Label(caution);
-            cautionText.setMinWidth(textWidth+boxWidth+5);
+            cautionText.setMinWidth(textWidth + boxWidth + 5);
             cautionText.setTextFill(Color.ORANGE);
             c.add(cautionText);
         }
@@ -395,7 +396,8 @@ public class Main extends Application {
         //Button
         Button okay = guiFactory.createButton("Okay", 120, 20);
         HBox buttonBox = new HBox(okay);
-        buttonBox.setPrefWidth(textWidth+boxWidth+5);
+        buttonBox.getStyleClass().add("popupButtons");
+        buttonBox.setPrefWidth(textWidth + boxWidth-5);
         buttonBox.setAlignment(Pos.BOTTOM_RIGHT);
         c.add(buttonBox);
 
@@ -426,7 +428,7 @@ public class Main extends Application {
         layout.getChildren().addAll(c);
         layout.getStyleClass().add("settings");
         layout.getStylesheets().add(styleSheet);
-        layout.setMaxWidth(textWidth+boxWidth);
+        layout.setMaxWidth(textWidth + boxWidth);
         layout.setAlignment(Pos.CENTER);
 
         setCentre(layout);
@@ -561,8 +563,8 @@ public class Main extends Application {
         c.add(newPswdBox2);
 
         //Buttons
-        Button okay = guiFactory.createButton("Okay", (textWidth+boxWidth)/2, 20);
-        Button cancel = guiFactory.createButton("Cancel", (textWidth+boxWidth)/2, 20);
+        Button okay = guiFactory.createButton("Okay", (textWidth + boxWidth) / 2, 20);
+        Button cancel = guiFactory.createButton("Cancel", (textWidth + boxWidth) / 2, 20);
         cancel.setOnAction(event -> {
             viewedRegion = "summary";
             updatePaintingBoxes();
@@ -708,11 +710,7 @@ public class Main extends Application {
 
         //Text for the title
         Label title = new Label();
-        if (version == null) {
-            title.setText("OptimalSpyglass - Part of the OptimalBI AWS Toolkit");
-        } else {
-            title.setText("OptimalSpyglass v" + version + " - Part of the OptimalBI AWS Toolkit");
-        }
+        title.setText("OptimalSpyglass - Part of the OptimalBI AWS Toolkit");
         title.getStylesheets().add("style.css");
         title.getStyleClass().add("topStyle");
         title.setPrefHeight(35);
@@ -909,21 +907,20 @@ public class Main extends Application {
                     ArrayList<HBox> rows = new ArrayList<>();
                     HBox currentRow = new HBox();
                     for (Service service : services) {
-                        VBox box = draw.drawOne(service);
+                        VBox box;
+                        //TODO: Remove text exit code
+                        Runnable exitCommand = () -> System.exit(0);
 
                         if (service.serviceType().equalsIgnoreCase("ec2")) {
-                            //Add graph button to box
-                            Button graph = guiFactory.createButton("Graphs", "popupButtons", buttonWidth, 10);
-                            graph.setOnAction(actionEvent -> {
+                            Runnable command = () -> {
                                 resetDialog();
                                 dialog = drawGraph(account.getCredentials(), service, mainStage.getScene());
                                 dialog.setAutoHide(true);
                                 dialog.show(mainStage);
-                            });
-                            VBox graphBox = new VBox(graph);
-                            graphBox.setPrefHeight(ServiceDraw.serviceHeight / 2);
-                            graphBox.setAlignment(Pos.BOTTOM_CENTER);
-                            box.getChildren().add(graphBox);
+                            };
+                            box = draw.drawOne(service, new PictureButton("Graph", command, null), new PictureButton("Exit text",exitCommand,null));
+                        } else {
+                            box = draw.drawOne(service, new PictureButton("Exit for text",exitCommand,null));
                         }
 
                         if (viewedRegion.equals("all")) {

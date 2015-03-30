@@ -139,7 +139,7 @@
 }
 .popupButtons {
     -fx-spacing: 0;
-    -fx-padding: 5;
+    -fx-padding: 0;
 }
 
 .popupButtons2 {
@@ -195,6 +195,7 @@
     -fx-background-color: #3b3b3b;
     -fx-text-fill: #f2f2f2f2;
     -fx-background-radius: 0;
+    -fx-padding: 5;
 
 }
 .button:hover {
