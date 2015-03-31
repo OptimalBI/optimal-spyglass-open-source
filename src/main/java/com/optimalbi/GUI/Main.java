@@ -918,9 +918,9 @@ public class Main extends Application {
                                 dialog.setAutoHide(true);
                                 dialog.show(mainStage);
                             };
-                            box = draw.drawOne(service, new PictureButton("Graph", command, null), new PictureButton("Exit text",exitCommand,null));
+                            box = draw.drawOne(service, new PictureButton("G", command, null), new PictureButton("E",exitCommand,null));
                         } else {
-                            box = draw.drawOne(service, new PictureButton("Exit for text",exitCommand,null));
+                            box = draw.drawOne(service, new PictureButton("E",exitCommand,null));
                         }
 
                         if (viewedRegion.equals("all")) {
