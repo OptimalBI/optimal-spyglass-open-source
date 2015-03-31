@@ -57,7 +57,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
 import javafx.stage.Popup;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -95,7 +94,7 @@ public class Main extends Application {
     private static Stage mainStage;
     //Gui Components
     private final double buttonWidth = 210;
-    private final double buttonHeight = 60;
+    private final double buttonHeight = 25;
     private final String styleSheet = "style.css";
     private final BorderPane border = new BorderPane();
     private final File credentialsFile = new File("credentials");
@@ -149,7 +148,7 @@ public class Main extends Application {
                         Platform.runLater(Main.this::updatePaintingBoxes);
                         Platform.runLater(() -> border.setTop(createTop()));
                         Platform.runLater(() -> border.setBottom(createBottom()));
-                        Platform.runLater(() -> border.setLeft(createLeft()));
+                        Platform.runLater(() -> border.setLeft(createButtonMenu()));
                         return null;
                     }
                 };
@@ -221,7 +220,7 @@ public class Main extends Application {
         primaryScreenBounds = Screen.getPrimary().getVisualBounds();
         applicationHeight = primaryScreenBounds.getHeight() / 1.11;
         applicationWidth = primaryScreenBounds.getWidth() / 1.11;
-        guiFactory = new TjfxFactory(buttonWidth, buttonHeight, styleSheet);
+        guiFactory = new TjfxFactory(buttonWidth, buttonHeight, styleSheet, "http://fonts.googleapis.com/css?family=Droid+Sans");
         createGUI();
 
         //TODO: Add icon image;
@@ -345,7 +344,7 @@ public class Main extends Application {
     }
 
     private void askForPassword(String promptText, int attempts) {
-        double textWidth = 120; //The minimum size the labels take up (aligns the Main)
+        double textWidth = 90; //The minimum size the labels take up (aligns the Main)
         double boxWidth = 240;
         fields = new HashMap<>(); //Reset the fields collection so we can use it from the callback method
         VBox layout = new VBox();
@@ -378,7 +377,7 @@ public class Main extends Application {
         }
         if (!caution.equals("")) {
             Label cautionText = new Label(caution);
-            cautionText.setMinWidth(textWidth + boxWidth + 5);
+            cautionText.setMinWidth(textWidth + boxWidth);
             cautionText.setTextFill(Color.ORANGE);
             c.add(cautionText);
         }
@@ -389,6 +388,7 @@ public class Main extends Application {
         passwordBoxTitle.setPrefWidth(textWidth);
         PasswordField passwordField = new PasswordField();
         passwordField.setPrefWidth(boxWidth);
+        passwordField.getStyleClass().add("password");
         HBox passwordCombo = new HBox(passwordBoxTitle, passwordField);
         passwordCombo.setAlignment(Pos.CENTER);
         c.add(passwordCombo);
@@ -397,7 +397,7 @@ public class Main extends Application {
         Button okay = guiFactory.createButton("Okay", 120, 20);
         HBox buttonBox = new HBox(okay);
         buttonBox.getStyleClass().add("popupButtons");
-        buttonBox.setPrefWidth(textWidth + boxWidth-5);
+        buttonBox.setPrefWidth(textWidth + boxWidth);
         buttonBox.setAlignment(Pos.BOTTOM_RIGHT);
         c.add(buttonBox);
 
@@ -429,6 +429,7 @@ public class Main extends Application {
         layout.getStyleClass().add("settings");
         layout.getStylesheets().add(styleSheet);
         layout.setMaxWidth(textWidth + boxWidth);
+        layout.setMaxHeight(prompt.getPrefHeight()*3);
         layout.setAlignment(Pos.CENTER);
 
         setCentre(layout);
@@ -443,7 +444,6 @@ public class Main extends Application {
 
     private void createGUI() {
         //Create the gui sections
-        border.setLeft(createLeft());
         border.setBottom(createBottom());
         border.setTop(createTop());
         VBox centrePlaceHolder = new VBox();
@@ -463,23 +463,25 @@ public class Main extends Application {
         mainStage.setOnCloseRequest(event -> System.exit(0));
     }
 
-    private VBox createLeft() {
+    private HBox createButtonMenu() {
         /*
          *Some Main components are created then not assigned, these are debug only components
          */
         List<Node> guiComponents = new ArrayList<>();
-        VBox layout = new VBox();
+        HBox layout = new HBox();
 
-        VBox buttons = new VBox();
+        HBox buttons = new HBox();
         //Regions Button
         Button regions = guiFactory.createButton("Regions");
         regions.setAlignment(Pos.BASELINE_LEFT);
+        regions.getStyleClass().add("botButton");
         regions.setOnAction(ActionEvent -> selectRegions());
         guiComponents.add(regions);
 
         //Update button - This button repolls the AWS API
         Button update = guiFactory.createButton("Update");
         update.setAlignment(Pos.BASELINE_LEFT);
+        update.getStyleClass().add("botButton");
         update.setOnAction(ActionEvent -> {
             Platform.runLater(Main.this::createAccounts);
         });
@@ -489,18 +491,21 @@ public class Main extends Application {
         //Manage credentials
         Button manageCredentials = guiFactory.createButton("Add/Remove credentials");
         manageCredentials.setAlignment(Pos.BASELINE_LEFT);
+        manageCredentials.getStyleClass().add("botButton");
         manageCredentials.setOnAction(event -> drawAccountManagement());
         guiComponents.add(manageCredentials);
 
         //Change password
         Button changePassword = guiFactory.createButton("Change password");
         changePassword.setAlignment(Pos.BASELINE_LEFT);
+        changePassword.getStyleClass().add("botButton");
         changePassword.setOnAction(event -> changePassword(""));
         guiComponents.add(changePassword);
 
         //Exit button
         Button exit = guiFactory.createButton("Exit");
         exit.setAlignment(Pos.BASELINE_LEFT);
+        exit.getStyleClass().add("botButton");
         exit.setOnAction(event -> System.exit(0));
         exit.setFocusTraversable(true);
         exit.requestFocus();
@@ -508,15 +513,15 @@ public class Main extends Application {
         HBox exitBox = new HBox(exit);
         exitBox.setMinHeight(buttonHeight);
         exitBox.setPrefWidth(buttonWidth);
-        exitBox.setAlignment(Pos.BOTTOM_CENTER);
+        exitBox.setAlignment(Pos.BOTTOM_RIGHT);
 
 
         //Add all buttons to buttons box
         buttons.getChildren().addAll(guiComponents);
-        buttons.setPrefHeight(applicationHeight);
+        buttons.setPrefWidth(applicationWidth);
 
         layout.getChildren().addAll(buttons, exitBox);
-        layout.setPrefHeight(applicationHeight);
+        layout.setPrefWidth(applicationWidth);
         layout.getStylesheets().add("style.css");
         layout.getStyleClass().add("leftStyle");
         return layout;
@@ -624,7 +629,7 @@ public class Main extends Application {
         oldPswdField.requestFocus();
     }
 
-    private HBox createBottom() {
+    private VBox createBottom() {
         List<Node> guiComponents = new ArrayList<>();
         HBox layout = new HBox();
 
@@ -660,7 +665,11 @@ public class Main extends Application {
         layout.getStyleClass().add("otherBotStyle");
         layout.setPrefSize(applicationWidth, 20);
         layout.setAlignment(Pos.BOTTOM_LEFT);
-        return layout;
+
+        VBox botBar = new VBox();
+        botBar.getChildren().add(createButtonMenu());
+        botBar.getChildren().add(layout);
+        return botBar;
     }
 
     private VBox waitingCentre() {
@@ -918,7 +927,7 @@ public class Main extends Application {
                                 dialog.setAutoHide(true);
                                 dialog.show(mainStage);
                             };
-                            box = draw.drawOne(service, new PictureButton("G", command, null), new PictureButton("E",exitCommand,null));
+                            box = draw.drawOne(service, new PictureButton("G", command, null), new PictureButton("E",exitCommand,null),new PictureButton("I",null,null));
                         } else {
                             box = draw.drawOne(service, new PictureButton("E",exitCommand,null));
                         }

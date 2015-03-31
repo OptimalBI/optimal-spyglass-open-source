@@ -22,11 +22,11 @@ import java.util.stream.Collectors;
  * Version: 1.01
  */
 public class ServiceDraw {
-    public static final int buttonWidth = 190;
-    public static final int buttonHeight = 20;
+    public static final int buttonWidth = 40;
+    public static final int buttonHeight = buttonWidth;
     public static final int serviceWidth = 260;
-    public static final int serviceHeight = 245;
-    public static final int labelWidth = serviceWidth / 2;
+    public static int serviceHeight = 250;
+    public static int labelWidth = serviceWidth / 2;
     public static final int textWidth = serviceWidth - labelWidth;
     private final String stylesheet;
 
@@ -247,7 +247,7 @@ public class ServiceDraw {
         drawing.setAlignment(Pos.TOP_CENTER);
 
         drawing.setMinWidth(serviceWidth);
-        drawing.setMinHeight(serviceHeight);
+//        drawing.setMinHeight(serviceHeight);
         drawing.getStylesheets().add(stylesheet);
         drawing.getStyleClass().add("instance");
         return drawing;
@@ -563,12 +563,16 @@ public class ServiceDraw {
                     b.command().run();
                 });
             }
+            button.getStyleClass().add("serviceButton");
+            button.setPrefSize(buttonWidth,buttonHeight);
             c.add(button);
         }
         HBox hbox = new HBox();
         hbox.getChildren().addAll(c);
         hbox.setAlignment(Pos.BOTTOM_CENTER);
+        hbox.getStyleClass().add("serviceButtons");
         hbox.setMaxWidth(serviceWidth);
+        hbox.setPrefHeight(serviceHeight/2);
         return hbox;
     }
 }
