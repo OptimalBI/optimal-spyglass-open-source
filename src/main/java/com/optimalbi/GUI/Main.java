@@ -464,24 +464,21 @@ public class Main extends Application {
     }
 
     private HBox createButtonMenu() {
-        /*
-         *Some Main components are created then not assigned, these are debug only components
-         */
         List<Node> guiComponents = new ArrayList<>();
         HBox layout = new HBox();
-
         HBox buttons = new HBox();
+        Pos alignment = Pos.CENTER;
         //Regions Button
         Button regions = guiFactory.createButton("Regions");
-        regions.setAlignment(Pos.BASELINE_LEFT);
-        regions.getStyleClass().add("botButton");
+        regions.setAlignment(alignment);
+        regions.getStyleClass().add("barItems");
         regions.setOnAction(ActionEvent -> selectRegions());
         guiComponents.add(regions);
 
         //Update button - This button repolls the AWS API
         Button update = guiFactory.createButton("Update");
-        update.setAlignment(Pos.BASELINE_LEFT);
-        update.getStyleClass().add("botButton");
+        update.setAlignment(alignment);
+        update.getStyleClass().add("barItems");
         update.setOnAction(ActionEvent -> {
             Platform.runLater(Main.this::createAccounts);
         });
@@ -490,40 +487,34 @@ public class Main extends Application {
 
         //Manage credentials
         Button manageCredentials = guiFactory.createButton("Add/Remove credentials");
-        manageCredentials.setAlignment(Pos.BASELINE_LEFT);
-        manageCredentials.getStyleClass().add("botButton");
+        manageCredentials.setAlignment(alignment);
+        manageCredentials.getStyleClass().add("barItems");
         manageCredentials.setOnAction(event -> drawAccountManagement());
         guiComponents.add(manageCredentials);
 
         //Change password
         Button changePassword = guiFactory.createButton("Change password");
-        changePassword.setAlignment(Pos.BASELINE_LEFT);
-        changePassword.getStyleClass().add("botButton");
+        changePassword.setAlignment(alignment);
+        changePassword.getStyleClass().add("barItems");
         changePassword.setOnAction(event -> changePassword(""));
         guiComponents.add(changePassword);
 
         //Exit button
         Button exit = guiFactory.createButton("Exit");
-        exit.setAlignment(Pos.BASELINE_LEFT);
-        exit.getStyleClass().add("botButton");
+        exit.setAlignment(alignment);
+        exit.getStyleClass().add("barItems");
         exit.setOnAction(event -> System.exit(0));
-        exit.setFocusTraversable(true);
-        exit.requestFocus();
-        //Exit box
-        HBox exitBox = new HBox(exit);
-        exitBox.setMinHeight(buttonHeight);
-        exitBox.setPrefWidth(buttonWidth);
-        exitBox.setAlignment(Pos.BOTTOM_RIGHT);
-
+        exit.setFocusTraversable(false);
+        guiComponents.add(exit);
 
         //Add all buttons to buttons box
         buttons.getChildren().addAll(guiComponents);
         buttons.setPrefWidth(applicationWidth);
 
-        layout.getChildren().addAll(buttons, exitBox);
+        layout.getChildren().addAll(buttons);
         layout.setPrefWidth(applicationWidth);
-        layout.getStylesheets().add("style.css");
-        layout.getStyleClass().add("leftStyle");
+        layout.getStyleClass().add("barStyle");
+
         return layout;
     }
 
@@ -667,7 +658,6 @@ public class Main extends Application {
         layout.setAlignment(Pos.BOTTOM_LEFT);
 
         VBox botBar = new VBox();
-        botBar.getChildren().add(createButtonMenu());
         botBar.getChildren().add(layout);
         return botBar;
     }
@@ -778,7 +768,8 @@ public class Main extends Application {
 
         VBox outline = new VBox();
 
-        outline.getChildren().addAll(topLayout, botLayout);
+        outline.getChildren().addAll(topLayout, botLayout,createButtonMenu());
+        outline.getStylesheets().add(styleSheet);
         return outline;
     }
 
