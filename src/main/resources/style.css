@@ -7,6 +7,10 @@
     -fx-background-color:black;
 }
 
+.borderPane{
+    -fx-background-color:white;
+}
+
 .progress-bar {
     -fx-background-color: transparent;
     -fx-indeterminate-bar-length: 300;
@@ -69,7 +73,7 @@
 }
 
 .toolbar{
-    -fx-spacing: 0;
+    -fx-spacing: 1;
     -fx-padding: 5;
 }
 
@@ -307,17 +311,15 @@
 .barItems {
     -fx-font-family: "Droid Sans";
     -fx-font-size: 12px;
-    -fx-font-weight: bold;
-    -fx-background-color:#575757;
-    -fx-text-fill: #ffb01b;
-    -fx-border-radius: 90;
+    -fx-background-color: #3b3b3b;
+    -fx-text-fill: #f2f2f2f2;
+    -fx-background-radius: 0;
 }
 
 .barStyle {
-    -fx-font-family: "Droid Sans";
-    -fx-font-size: 32px;
-    -fx-text-fill: #000000;
-    -fx-background-color:#575757;
+    -fx-background-color:#faa61a;
+    -fx-padding: 5;
+    -fx-spacing: 1;
 }
 
 
@@ -399,4 +401,3 @@
 .scroll-bar:horizontal:focused {
  -fx-background-color: transparent,rgb(96,96,96),rgb(96,96,96);
 }
-

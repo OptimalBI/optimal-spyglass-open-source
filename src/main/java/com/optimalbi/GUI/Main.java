@@ -123,6 +123,8 @@ public class Main extends Application {
     private int doneAreas = 0;
     @SuppressWarnings("FieldCanBeLocal")
     private String viewedRegion = "summary";
+    private Button summary;
+
 
     private final ChangeListener<Number> paintListener = new ChangeListener<Number>() {
         /*
@@ -229,6 +231,8 @@ public class Main extends Application {
         mainStage.show();
 
         logger.info("Hello chaps");
+
+        summary.requestFocus();
 
         //Process the settings file
         loadSettings();
@@ -449,7 +453,9 @@ public class Main extends Application {
         VBox centrePlaceHolder = new VBox();
         centrePlaceHolder.setPrefSize(applicationWidth, applicationHeight);
         border.setCenter(centrePlaceHolder);
-
+        border.getStylesheets().add(styleSheet);
+        border.getStyleClass().add("borderPane");
+        border.setFocusTraversable(false);
         //Add gui sections to the stage
         Scene scene = new Scene(border, applicationWidth, applicationHeight);
         mainStage.setScene(scene);
@@ -465,7 +471,6 @@ public class Main extends Application {
 
     private HBox createButtonMenu() {
         List<Node> guiComponents = new ArrayList<>();
-        HBox layout = new HBox();
         HBox buttons = new HBox();
         Pos alignment = Pos.CENTER;
         //Regions Button
@@ -510,12 +515,9 @@ public class Main extends Application {
         //Add all buttons to buttons box
         buttons.getChildren().addAll(guiComponents);
         buttons.setPrefWidth(applicationWidth);
+        buttons.getStyleClass().add("barStyle");
 
-        layout.getChildren().addAll(buttons);
-        layout.setPrefWidth(applicationWidth);
-        layout.getStyleClass().add("barStyle");
-
-        return layout;
+        return buttons;
     }
 
     private void changePassword(String notification) {
@@ -710,7 +712,6 @@ public class Main extends Application {
         //Text for the title
         Label title = new Label();
         title.setText("OptimalSpyglass - Part of the OptimalBI AWS Toolkit");
-        title.getStylesheets().add("style.css");
         title.getStyleClass().add("topStyle");
         title.setPrefHeight(35);
         guiComponents.add(title);
@@ -733,7 +734,6 @@ public class Main extends Application {
         }
 
         Label versionNotification = new Label("New version available, Click Here");
-        versionNotification.getStylesheets().add("style.css");
         versionNotification.getStyleClass().add("versionText");
         versionNotification.setMinWidth(220);
         versionNotification.setAlignment(Pos.CENTER);
@@ -751,7 +751,6 @@ public class Main extends Application {
 
         topLayout.getChildren().addAll(guiComponents);
         topLayout.setAlignment(Pos.CENTER);
-        topLayout.getStylesheets().add("style.css");
         topLayout.getStyleClass().add("topStyle");
 
         double thisHeight = applicationHeight / 8;
@@ -761,14 +760,19 @@ public class Main extends Application {
 
         //Bottom section of toolbar
         ToolBar topBar = updateToolbar();
-        topBar.getStyleClass().add("toolbar");
+//        topBar.getStyleClass().add("toolbar");
         topBar.setPrefWidth(applicationWidth * 2);
 
         botLayout.getChildren().add(topBar);
 
-        VBox outline = new VBox();
+        HBox buttonMenu = createButtonMenu();
+        buttonMenu.setPrefWidth(applicationWidth);
+        buttonMenu.setAlignment(Pos.CENTER);
 
-        outline.getChildren().addAll(topLayout, botLayout,createButtonMenu());
+        VBox outline = new VBox();
+        outline.setPrefWidth(applicationWidth);
+        outline.getChildren().addAll(topLayout, botLayout);
+        outline.getChildren().add(buttonMenu);
         outline.getStylesheets().add(styleSheet);
         return outline;
     }
@@ -807,17 +811,19 @@ public class Main extends Application {
 
     private ToolBar updateToolbar() {
         Map<String, String> regionNames = Service.regionNames();
+        double minWidth = 60;
 
         List<Node> toolButtons = new ArrayList<>();
         Label allFilterLabel = new Label("View: ");
         allFilterLabel.getStyleClass().add("toolbarLabel");
         toolButtons.add(allFilterLabel);
 
-        Button summary = guiFactory.createButton("Summary", -1, -1);
+        summary = guiFactory.createButton("Summary", -1, -1);
         summary.setOnAction(ActionEvent -> {
             viewedRegion = "summary";
             updatePaintingBoxes();
         });
+        summary.setMinWidth(minWidth);
         toolButtons.add(summary);
 
         Button all = guiFactory.createButton("All", -1, -1);
@@ -825,6 +831,7 @@ public class Main extends Application {
             viewedRegion = "all";
             updatePaintingBoxes();
         });
+        all.setMinWidth(minWidth);
         toolButtons.add(all);
 
         javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
@@ -852,9 +859,9 @@ public class Main extends Application {
         ToolBar toolBar = new ToolBar();
         toolBar.getItems().addAll(toolButtons);
         toolBar.getStylesheets().add(styleSheet);
-
         toolBar.getStyleClass().add("toolbar");
         toolBar.setPrefWidth(primaryScreenBounds.getWidth());
+
         return toolBar;
     }
 
@@ -1721,6 +1728,9 @@ public class Main extends Application {
         }
 
         outer.getChildren().addAll(b);
+        outer.getStylesheets().add(styleSheet);
+        outer.setFocusTraversable(false);
+        outer.getStyleClass().add("centreStyle");
 
         ScrollPane pane = new ScrollPane(outer);
         pane.getStylesheets().add(styleSheet);
@@ -1729,7 +1739,6 @@ public class Main extends Application {
                 dialog.show(mainStage);
             }
         });
-
         Platform.runLater(() -> border.setCenter(pane));
     }
 }

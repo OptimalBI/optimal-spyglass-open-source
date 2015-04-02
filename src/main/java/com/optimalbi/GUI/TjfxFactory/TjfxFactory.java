@@ -106,6 +106,7 @@ public class TjfxFactory {
         textField.setAlignment(Pos.CENTER);
         textField.setPrefWidth(fieldWidth);
         textField.setEditable(false);
+        textField.setFocusTraversable(false);
 
         HBox box = new HBox(labelNode, textField);
         box.setPrefWidth(textWidth);
