@@ -1,7 +1,10 @@
 package com.optimalbi.GUI;
 
+import com.amazonaws.services.simpleworkflow.model.Run;
 import com.optimalbi.AmazonAccount;
 import com.optimalbi.GUI.TjfxFactory.GuiButton;
+import com.optimalbi.GUI.TjfxFactory.PictureButton;
+import com.optimalbi.GUI.TjfxFactory.TjfxFactory;
 import com.optimalbi.Services.Service;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -10,11 +13,11 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.Popup;
+import javafx.stage.Stage;
+import org.apache.commons.lang.Validate;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -29,9 +32,13 @@ public class ServiceDraw {
     public static int labelWidth = serviceWidth / 2;
     public static final int textWidth = serviceWidth - labelWidth;
     private final String stylesheet;
+    private final TjfxFactory guiFactory;
+    private final Stage mainStage;
 
-    public ServiceDraw(String stylesheet) {
+    public ServiceDraw(String stylesheet, TjfxFactory guiFactory, Stage mainStage) {
         this.stylesheet = stylesheet;
+        this.guiFactory = guiFactory;
+        this.mainStage = mainStage;
     }
 
     public VBox drawOne(Service service, GuiButton... buttons) {
@@ -240,17 +247,52 @@ public class ServiceDraw {
         }
         c.add(instanceState);
 
-        HBox buttonBox = createButtons(buttons);
+
+        List<GuiButton> guiButtons = addEc2Buttons(service,buttons);
+
+        GuiButton[] finalButtons = new GuiButton[guiButtons.size()];
+        finalButtons = guiButtons.toArray(finalButtons);
+
+        HBox buttonBox = createButtons(finalButtons);
         c.add(buttonBox);
 
         drawing.getChildren().addAll(c);
         drawing.setAlignment(Pos.TOP_CENTER);
 
         drawing.setMinWidth(serviceWidth);
-//        drawing.setMinHeight(serviceHeight);
         drawing.getStylesheets().add(stylesheet);
         drawing.getStyleClass().add("instance");
         return drawing;
+    }
+
+    private List<GuiButton> addEc2Buttons(Service service, GuiButton... currentButtons){
+        List<GuiButton> buttons = new ArrayList<>();
+        Collections.addAll(buttons, currentButtons);
+
+        //Tags button
+        Runnable tagCommand = () -> {
+            double textWidth = 220;
+            double labelWidth = 240;
+
+            Map<String,String> tags = service.getTags();
+            List<Node> guiComponents = new ArrayList<>();
+            for(Map.Entry<String,String> tag : tags.entrySet()){
+                guiComponents.add(guiFactory.labelAndField(tag.getKey(),tag.getValue(),textWidth,labelWidth,"statisticsTitle"));
+            }
+            VBox vBox = new VBox();
+            vBox.getStylesheets().add(stylesheet);
+            vBox.getStyleClass().add("popup");
+            vBox.setPrefWidth(textWidth+labelWidth+5);
+            vBox.getChildren().addAll(guiComponents);
+            Popup tagWindow = new Popup();
+            tagWindow.getContent().add(vBox);
+            tagWindow.show(mainStage);
+            tagWindow.setAutoHide(true);
+        };
+        GuiButton tag = new PictureButton("T",tagCommand,null);
+        buttons.add(tag);
+
+        return buttons;
     }
 
     private VBox drawRDS(Service service, GuiButton... buttons) {

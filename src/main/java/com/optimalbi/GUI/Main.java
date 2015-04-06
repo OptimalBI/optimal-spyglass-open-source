@@ -399,6 +399,7 @@ public class Main extends Application {
 
         //Button
         Button okay = guiFactory.createButton("Okay", 120, 20);
+        okay.getStyleClass().add("popupButton");
         HBox buttonBox = new HBox(okay);
         buttonBox.getStyleClass().add("popupButtons");
         buttonBox.setPrefWidth(textWidth + boxWidth);
@@ -897,7 +898,7 @@ public class Main extends Application {
      */
     private void drawServiceBoxes(int instancesWide) {
 
-        ServiceDraw draw = new ServiceDraw(styleSheet);
+        ServiceDraw draw = new ServiceDraw(styleSheet,guiFactory,mainStage);
         VBox allInstances = new VBox();
 
         for (AmazonCredentials credential : credentials) {
@@ -915,8 +916,7 @@ public class Main extends Application {
                     HBox currentRow = new HBox();
                     for (Service service : services) {
                         VBox box;
-                        //TODO: Remove text exit code
-                        Runnable exitCommand = () -> System.exit(0);
+
 
                         if (service.serviceType().equalsIgnoreCase("ec2")) {
                             Runnable command = () -> {
@@ -925,9 +925,9 @@ public class Main extends Application {
                                 dialog.setAutoHide(true);
                                 dialog.show(mainStage);
                             };
-                            box = draw.drawOne(service, new PictureButton("G", command, null), new PictureButton("E",exitCommand,null),new PictureButton("I",null,null));
+                            box = draw.drawOne(service, new PictureButton("G", command, null));
                         } else {
-                            box = draw.drawOne(service, new PictureButton("E",exitCommand,null));
+                            box = draw.drawOne(service);
                         }
 
                         if (viewedRegion.equals("all")) {
@@ -1336,7 +1336,7 @@ public class Main extends Application {
 
         //Regions layout
         HBox layout = new HBox();
-        layout.getStyleClass().add("subpopup2");
+        layout.getStyleClass().add("regionBar");
         layout.getStylesheets().add(styleSheet);
 
         final SimpleBooleanProperty toChange = new SimpleBooleanProperty(false);
