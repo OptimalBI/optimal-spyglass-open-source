@@ -25,6 +25,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Popup;
 
 /**
@@ -109,6 +111,25 @@ public class TjfxFactory {
         textField.setFocusTraversable(false);
 
         HBox box = new HBox(labelNode, textField);
+        box.setPrefWidth(textWidth);
+        box.setAlignment(Pos.CENTER_LEFT);
+
+        return box;
+    }
+
+    public HBox textAndLabel(String label, String field, double textWidth, double fieldWidth, String styleClassLabel) {
+        Text textNode = new Text(label);
+        textNode.getStyleClass().add(styleClassLabel);
+        textNode.setTextAlignment(TextAlignment.RIGHT);
+        textNode.setWrappingWidth(textWidth);
+        TextField textField = new TextField(field);
+        textField.setAlignment(Pos.CENTER);
+        textField.setPrefWidth(fieldWidth);
+        textField.getStyleClass().add(styleClassLabel);
+        textField.setEditable(false);
+        textField.setFocusTraversable(false);
+
+        HBox box = new HBox(textNode, textField);
         box.setPrefWidth(textWidth);
         box.setAlignment(Pos.CENTER_LEFT);
 

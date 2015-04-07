@@ -42,7 +42,7 @@
     -fx-font-size: 30px;
     -fx-text-fill: #FFFFFF;
     -fx-spacing: 10;
-    -fx-padding: 8;
+    -fx-padding: 5;
     -fx-background-color:#faa61a;
 }
 
@@ -153,7 +153,7 @@
     -fx-background-color: #3b3b3b;
     -fx-text-fill: #f2f2f2f2;
     -fx-background-radius: 3;
-    -fx-padding: 6;
+    -fx-padding: 5;
 
 }
 .button:hover {
@@ -168,7 +168,7 @@
 
 .buttonClear{
     -fx-font-family: "Droid Sans";
-    -fx-font-size: 10px;
+    -fx-font-size: 14px;
     -fx-font-weight: normal;
     -fx-background-color: #FF9747;
     -fx-text-fill: #000000;
@@ -176,14 +176,14 @@
 
 .popupButtons, .popupButtons2 {
     -fx-font-family: "Droid Sans";
-    -fx-font-size: 12px;
+    -fx-font-size: 14px;
     -fx-text-fill: #000000;
     -fx-background-radius: 3;
     -fx-border-radius:3;
 }
 .popupButtons {
-    -fx-spacing: 0;
-    -fx-padding: 0;
+    -fx-spacing: 3;
+    -fx-padding: 3;
 
 }
 
@@ -198,8 +198,8 @@
     -fx-text-fill: #000000;
     -fx-spacing: 30;
     -fx-padding: 10;
+    -fx-background-color: white;
     -fx-border-color: #FFCE71;
-    -fx-background-color:#FFFFFF;
 }
 
 .popupButton{
@@ -215,8 +215,6 @@
     -fx-background-radius: 3;
     -fx-border-color: #FFCE71;
 }
-
-
 
 .scroll-pane {
     -fx-background-insets: 0;
@@ -271,7 +269,7 @@
 
 .regionTitle{
     -fx-font-family: "Droid Sans";
-    -fx-font-size: 16px;
+    -fx-font-size: 14px;
     -fx-text-fill: steelblue;
 }
 
@@ -295,7 +293,7 @@
 
 .serviceButton, .serviceButton:selected, serviceButton:focused, serviceButton:active{
     -fx-font-family: "Droid Sans";
-    -fx-font-size: 24px;
+    -fx-font-size: 26px;
     -fx-background-color: #3b3b3b;
     -fx-text-fill: #f2f2f2f2;
     -fx-background-radius: 3;
@@ -318,7 +316,7 @@
 
 .barItems {
     -fx-font-family: "Droid Sans";
-    -fx-font-size: 12px;
+    -fx-font-size: 14px;
     -fx-background-color: #3b3b3b;
     -fx-text-fill: #f2f2f2f2;
     -fx-background-radius: 3;
@@ -335,7 +333,78 @@
     -fx-spacing: 3;
 }
 
+.tagBox{
+    -fx-font-family: "Droid Sans";
+    -fx-font-size: 14px;
+    -fx-spacing: 10;
+    -fx-padding: 25;
+    -fx-background-color: white;
+    -fx-border-color: #FFCE71;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
 
+.tagTitle{
+    -fx-font-family: "Open Sans";
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-background-color: white;
+    -fx-border-color: white;
+    -fx-border-radius: 3;
+}
+
+.tagValue{
+    -fx-font-family: "Droid Sans";
+    -fx-font-size: 14px;
+    -fx-background-color: white;
+    -fx-border-color: lightgrey;
+    -fx-border-radius: 3;
+}
+
+.centrePlaceStyle{
+    -fx-padding: 0;
+    -fx-spacing: 0;
+    -fx-background-color: #faa61a;
+}
+
+.table-view {
+    -fx-base: white;
+    -fx-background-color: white;
+    -fx-table-cell-border-color: lightgrey;
+    -fx-table-header-border-color: black;
+    -fx-padding: -2;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: transparent;
+}
+
+.table-view .column-header, .table-view .filler {
+    -fx-size: 26;
+    -fx-border-color: black;
+    -fx-border-width: 0 0 2 1;
+    -fx-border-insets: 0 0 5 0;
+    -fx-background-color: white;
+    -fx-padding: 3;
+}
+
+.table-view .column-header .label {
+    -fx-font-size: 18pt;
+    -fx-font-family: "Droid Sans";
+    -fx-text-fill: black;
+    -fx-alignment: center-left;
+}
+
+.tableCol{
+    -fx-font-size: 14pt;
+    -fx-font-family: "Droid Sans";
+    -fx-text-fill: black;
+    -fx-alignment: center-left;
+}
+
+.table-view:focused .table-row-cell:filled:focused:selected {
+    -fx-background-color: #FFFFFF;
+}
 
 /****************************************************************
 

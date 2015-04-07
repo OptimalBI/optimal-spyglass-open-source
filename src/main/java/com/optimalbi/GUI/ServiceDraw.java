@@ -1,21 +1,27 @@
 package com.optimalbi.GUI;
 
-import com.amazonaws.services.simpleworkflow.model.Run;
 import com.optimalbi.AmazonAccount;
 import com.optimalbi.GUI.TjfxFactory.GuiButton;
 import com.optimalbi.GUI.TjfxFactory.PictureButton;
 import com.optimalbi.GUI.TjfxFactory.TjfxFactory;
 import com.optimalbi.Services.Service;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.effect.Bloom;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.effect.Shadow;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
-import org.apache.commons.lang.Validate;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -138,20 +144,7 @@ public class ServiceDraw {
 
         //Instance Type
         Label instanceType = new Label(stringCap(service.serviceType()));
-        switch (service.serviceType()) {
-            case "RDS":
-                instanceType.getStyleClass().add("rdsTitle");
-                break;
-            case "ec2":
-                instanceType.getStyleClass().add("ec2Title");
-                break;
-            case "Redshift":
-                instanceType.getStyleClass().add("redshiftTitle");
-                break;
-            default:
-                instanceType.getStyleClass().add("statisticsTitle");
-                break;
-        }
+        instanceType.getStyleClass().add("ec2Title");
         instanceType.setAlignment(Pos.CENTER);
         instanceType.setPrefWidth(serviceWidth);
         c.add(instanceType);
@@ -271,20 +264,87 @@ public class ServiceDraw {
 
         //Tags button
         Runnable tagCommand = () -> {
-            double textWidth = 220;
-            double labelWidth = 240;
+            double textWidth = 100;
+            double labelWidth = 100;
 
             Map<String,String> tags = service.getTags();
-            List<Node> guiComponents = new ArrayList<>();
-            for(Map.Entry<String,String> tag : tags.entrySet()){
-                guiComponents.add(guiFactory.labelAndField(tag.getKey(),tag.getValue(),textWidth,labelWidth,"statisticsTitle"));
+            List<Node> guiComponents = new LinkedList<>();
+
+            //Get the width for all the text
+            for(String name: tags.keySet()){
+                Text textNode = new Text(name+": ");
+
+                Scene tempScene = new Scene(new Group(textNode));
+                tempScene.getStylesheets().add(stylesheet);
+                textNode.getStyleClass().add("tagTitle");
+                textNode.applyCss();
+
+                double tempWidth = textNode.getLayoutBounds().getWidth();
+                if(tempWidth>textWidth){
+                    textWidth = tempWidth;
+                }
             }
+
+            for(String name: tags.values()){
+                Text textNode = new Text(name+": ");
+
+                Scene tempScene = new Scene(new Group(textNode));
+                tempScene.getStylesheets().add(stylesheet);
+                textNode.getStyleClass().add("tagValue");
+                textNode.applyCss();
+
+                double tempWidth = textNode.getLayoutBounds().getWidth()+40;
+                if(tempWidth>labelWidth){
+                    labelWidth = tempWidth;
+                }
+            }
+
+            DropShadow shadow = new DropShadow(1.8,Color.LIGHTGREY);
+            shadow.setOffsetY(1);
+
+            Text title = new Text(service.serviceName() + "'s tags");
+            title.setWrappingWidth(textWidth + labelWidth);
+            title.getStyleClass().add("tagTitle");
+            title.setTextAlignment(TextAlignment.CENTER);
+            title.setEffect(shadow);
+            guiComponents.add(title);
+
+            for(Map.Entry<String,String> tag : tags.entrySet()){
+                Text textNode = new Text(tag.getKey()+": ");
+                textNode.setFill(Color.BLACK);
+                textNode.getStyleClass().add("tagTitle");
+                textNode.setTextAlignment(TextAlignment.RIGHT);
+                textNode.setWrappingWidth(textWidth);
+                TextField textField = new TextField(tag.getValue());
+                textField.setAlignment(Pos.CENTER);
+                textField.setPrefWidth(labelWidth);
+                textField.getStyleClass().add("tagValue");
+                textField.setEditable(false);
+                textField.setFocusTraversable(false);
+
+                HBox box = new HBox(textNode, textField);
+                box.setPrefWidth(textWidth);
+                box.getStylesheets().add(stylesheet);
+                box.setAlignment(Pos.CENTER_LEFT);
+
+                box.getStyleClass().add("tagTitle");
+                guiComponents.add(box);
+            }
+            //Close button
+            Popup tagWindow = new Popup();
+
+            Button close = guiFactory.createButton("Close");
+            close.setOnAction(event -> {
+                tagWindow.hide();
+            });
+            guiComponents.add(close);
+
             VBox vBox = new VBox();
+            vBox.setAlignment(Pos.CENTER_RIGHT);
             vBox.getStylesheets().add(stylesheet);
-            vBox.getStyleClass().add("popup");
+            vBox.getStyleClass().add("tagBox");
             vBox.setPrefWidth(textWidth+labelWidth+5);
             vBox.getChildren().addAll(guiComponents);
-            Popup tagWindow = new Popup();
             tagWindow.getContent().add(vBox);
             tagWindow.show(mainStage);
             tagWindow.setAutoHide(true);
@@ -304,20 +364,7 @@ public class ServiceDraw {
 
         //Instance Type
         Label instanceType = new Label(stringCap(service.serviceType()));
-        switch (service.serviceType()) {
-            case "RDS":
-                instanceType.getStyleClass().add("rdsTitle");
-                break;
-            case "ec2":
-                instanceType.getStyleClass().add("ec2Title");
-                break;
-            case "Redshift":
-                instanceType.getStyleClass().add("redshiftTitle");
-                break;
-            default:
-                instanceType.getStyleClass().add("statisticsTitle");
-                break;
-        }
+        instanceType.getStyleClass().add("rdsTitle");
         instanceType.setAlignment(Pos.CENTER);
         instanceType.setPrefWidth(serviceWidth);
         c.add(instanceType);
@@ -413,7 +460,12 @@ public class ServiceDraw {
         }
         c.add(instanceState);
 
-        HBox buttonBox = createButtons(buttons);
+        List<GuiButton> guiButtons = addRDSButtons(service,buttons);
+
+        GuiButton[] finalButtons = new GuiButton[guiButtons.size()];
+        finalButtons = guiButtons.toArray(finalButtons);
+
+        HBox buttonBox = createButtons(finalButtons);
         c.add(buttonBox);
 
         drawing.getChildren().addAll(c);
@@ -424,6 +476,13 @@ public class ServiceDraw {
         drawing.getStylesheets().add(stylesheet);
         drawing.getStyleClass().add("instance");
         return drawing;
+    }
+
+    private List<GuiButton> addRDSButtons(Service service, GuiButton... currentButtons){
+        List<GuiButton> buttons = new ArrayList<>();
+        Collections.addAll(buttons, currentButtons);
+
+        return buttons;
     }
 
     private VBox drawRedshift(Service service, GuiButton... buttons) {
@@ -544,7 +603,12 @@ public class ServiceDraw {
         }
         c.add(instanceState);
 
-        HBox buttonBox = createButtons(buttons);
+        List<GuiButton> guiButtons = addRedshiftButtons(service,buttons);
+
+        GuiButton[] finalButtons = new GuiButton[guiButtons.size()];
+        finalButtons = guiButtons.toArray(finalButtons);
+
+        HBox buttonBox = createButtons(finalButtons);
         c.add(buttonBox);
 
         drawing.getChildren().addAll(c);
@@ -555,6 +619,103 @@ public class ServiceDraw {
         drawing.getStylesheets().add(stylesheet);
         drawing.getStyleClass().add("instance");
         return drawing;
+    }
+
+    private List<GuiButton> addRedshiftButtons(Service service, GuiButton... currentButtons){
+        List<GuiButton> buttons = new ArrayList<>();
+        Collections.addAll(buttons, currentButtons);
+
+        //Tags button
+        Runnable tagCommand = () -> {
+            double textWidth = 100;
+            double labelWidth = 100;
+
+            Map<String,String> tags = service.getTags();
+            List<Node> guiComponents = new LinkedList<>();
+
+            //Get the width for all the text
+            for(String name: tags.keySet()){
+                Text textNode = new Text(name+": ");
+
+                Scene tempScene = new Scene(new Group(textNode));
+                tempScene.getStylesheets().add(stylesheet);
+                textNode.getStyleClass().add("tagTitle");
+                textNode.applyCss();
+
+                double tempWidth = textNode.getLayoutBounds().getWidth();
+                if(tempWidth>textWidth){
+                    textWidth = tempWidth;
+                }
+            }
+
+            for(String name: tags.values()){
+                Text textNode = new Text(name+": ");
+
+                Scene tempScene = new Scene(new Group(textNode));
+                tempScene.getStylesheets().add(stylesheet);
+                textNode.getStyleClass().add("tagValue");
+                textNode.applyCss();
+
+                double tempWidth = textNode.getLayoutBounds().getWidth()+40;
+                if(tempWidth>labelWidth){
+                    labelWidth = tempWidth;
+                }
+            }
+
+            DropShadow shadow = new DropShadow(1.8,Color.LIGHTGREY);
+            shadow.setOffsetY(1);
+
+            Text title = new Text(service.serviceName() + "'s tags");
+            title.setWrappingWidth(textWidth + labelWidth);
+            title.getStyleClass().add("tagTitle");
+            title.setTextAlignment(TextAlignment.CENTER);
+            title.setEffect(shadow);
+            guiComponents.add(title);
+
+            for(Map.Entry<String,String> tag : tags.entrySet()){
+                Text textNode = new Text(tag.getKey()+": ");
+                textNode.setFill(Color.BLACK);
+                textNode.getStyleClass().add("tagTitle");
+                textNode.setTextAlignment(TextAlignment.RIGHT);
+                textNode.setWrappingWidth(textWidth);
+                TextField textField = new TextField(tag.getValue());
+                textField.setAlignment(Pos.CENTER);
+                textField.setPrefWidth(labelWidth);
+                textField.getStyleClass().add("tagValue");
+                textField.setEditable(false);
+                textField.setFocusTraversable(false);
+
+                HBox box = new HBox(textNode, textField);
+                box.setPrefWidth(textWidth);
+                box.getStylesheets().add(stylesheet);
+                box.setAlignment(Pos.CENTER_LEFT);
+
+                box.getStyleClass().add("tagTitle");
+                guiComponents.add(box);
+            }
+            //Close button
+            Popup tagWindow = new Popup();
+
+            Button close = guiFactory.createButton("Close");
+            close.setOnAction(event -> {
+                tagWindow.hide();
+            });
+            guiComponents.add(close);
+
+            VBox vBox = new VBox();
+            vBox.setAlignment(Pos.CENTER_RIGHT);
+            vBox.getStylesheets().add(stylesheet);
+            vBox.getStyleClass().add("tagBox");
+            vBox.setPrefWidth(textWidth+labelWidth+5);
+            vBox.getChildren().addAll(guiComponents);
+            tagWindow.getContent().add(vBox);
+            tagWindow.show(mainStage);
+            tagWindow.setAutoHide(true);
+        };
+        GuiButton tag = new PictureButton("T",tagCommand,null);
+        buttons.add(tag);
+
+        return buttons;
     }
 
     public List<VBox> drawAccount(AmazonAccount account) {
@@ -606,7 +767,7 @@ public class ServiceDraw {
                 });
             }
             button.getStyleClass().add("serviceButton");
-            button.setPrefSize(buttonWidth,buttonHeight);
+            button.setPrefSize(buttonWidth, buttonHeight);
             c.add(button);
         }
         HBox hbox = new HBox();

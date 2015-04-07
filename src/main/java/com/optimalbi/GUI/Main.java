@@ -33,6 +33,8 @@ import com.optimalbi.Services.Service;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
@@ -123,6 +125,7 @@ public class Main extends Application {
     private int doneAreas = 0;
     @SuppressWarnings("FieldCanBeLocal")
     private String viewedRegion = "summary";
+    private String listOrBoxes = "list";
     private Button summary;
 
 
@@ -140,21 +143,16 @@ public class Main extends Application {
                     protected Void call() throws Exception {
                         Thread.sleep(delayTime);
                         primaryScreenBounds = Screen.getPrimary().getVisualBounds();
-                        applicationHeight = mainStage.getHeight();
-                        applicationWidth = mainStage.getWidth();
-                        if (dialog != null) {
-                            dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
-                            dialog.setY(mainStage.getY() + mainStage.getHeight() / 2.75 - dialog.getHeight() / 2);
-                            dialog.show(mainStage);
-                        }
-                        Platform.runLater(Main.this::updatePaintingBoxes);
+                        applicationHeight = mainStage.getMaxHeight();
+                        applicationWidth = mainStage.getMaxWidth();
                         Platform.runLater(() -> border.setTop(createTop()));
                         Platform.runLater(() -> border.setBottom(createBottom()));
                         Platform.runLater(() -> border.setLeft(createButtonMenu()));
+                        Platform.runLater(Main.this::updatePaintingBoxes);
                         return null;
                     }
                 };
-                new Thread(task).start();
+//                new Thread(task).start();
             }
         }
     };
@@ -897,6 +895,10 @@ public class Main extends Application {
      * @param instancesWide The number of instances to draw in each row.
      */
     private void drawServiceBoxes(int instancesWide) {
+        if(listOrBoxes.equalsIgnoreCase("list")){
+            drawListView();
+            return;
+        }
 
         ServiceDraw draw = new ServiceDraw(styleSheet,guiFactory,mainStage);
         VBox allInstances = new VBox();
@@ -972,6 +974,30 @@ public class Main extends Application {
 
         //Makes sure this is applied on the main thread so the GUI doesn't throw a fit
         Platform.runLater(() -> border.setCenter(scrollPane));
+    }
+
+    private void drawListView(){
+        TableView<Service> tableView = new TableView<>();
+        tableView.setFocusTraversable(false);
+        tableView.setPrefSize(applicationWidth, applicationHeight);
+        tableView.getItems().addAll(accounts.get(0).getServices());
+        TableColumn<Service,String> serviceNameCol = new TableColumn<>("Service Name");
+        serviceNameCol.setPrefWidth(200);
+        serviceNameCol.setCellValueFactory(cellData -> {
+            String serviceName = cellData.getValue().serviceName();
+            StringProperty serviceProperty = new SimpleStringProperty(serviceName);
+            return serviceProperty;
+        });
+        serviceNameCol.getStyleClass().addAll("tableCol");
+        tableView.getColumns().add(serviceNameCol);
+        tableView.getStylesheets().add(styleSheet);
+
+        VBox outer = new VBox(tableView);
+        outer.setPrefSize(applicationWidth,applicationHeight);
+        outer.getStyleClass().add("centrePlaceStyle");
+        outer.getStylesheets().add(styleSheet);
+
+        Platform.runLater(()-> border.setCenter(outer));
     }
 
     private void askForCredentials() {
@@ -1265,7 +1291,7 @@ public class Main extends Application {
         double textWidth = 350;
 
         for (AmazonCredentials credential : credentials) {
-            Pos alignment = Pos.CENTER_LEFT;
+            Pos alignment = Pos.CENTER;
 
             //Account label
             Label label = new Label("Account Name: ");
@@ -1280,9 +1306,7 @@ public class Main extends Application {
             //Remove button
             Button remove = guiFactory.createButton("Remove", buttonWidth / 2, buttonHeight / 2.5);
             remove.setOnAction(ActionEvent -> {
-                dialog.hide();
                 removeAccount(credential);
-                dialog = null;
                 drawAccountManagement();
             });
 
@@ -1307,23 +1331,19 @@ public class Main extends Application {
             resetDialog();
         });
         HBox buttons = new HBox(add, close);
-        buttons.getStyleClass().add("subpopup");
         buttons.setPrefWidth(allCredentials.getPrefWidth());
+        buttons.getStyleClass().add("popupButtons");
         buttons.setAlignment(Pos.CENTER);
         allCredentials.getChildren().add(buttons);
-
-
-        allCredentials.getStyleClass().add("popup");
-        allCredentials.getStylesheets().add(styleSheet);
 
         //Config anything that need to go all the way across the gui
         buttons.setPrefWidth(allCredentials.getPrefWidth());
 
-        setCentre(allCredentials);
+        allCredentials.getStylesheets().add(styleSheet);
+        allCredentials.getStyleClass().add("settings");
+        allCredentials.setAlignment(Pos.TOP_CENTER);
 
-//        dialog = guiFactory.setupDialog(-1, -1, allCredentials);
-//        dialog.show(mainStage);
-//        dialog.setAutoHide(true);
+        setCentre(allCredentials);
     }
 
     private void selectRegions() {
