@@ -381,25 +381,49 @@
 
 .table-view .column-header, .table-view .filler {
     -fx-size: 26;
-    -fx-border-color: black;
-    -fx-border-width: 0 0 2 1;
-    -fx-border-insets: 0 0 5 0;
+    -fx-border-color:
+        transparent
+        #faa61a
+        #EEE
+        #faa61a;
+    -fx-border-width: 0 0.5 0 0.5;
+    -fx-border-insets: 5 0 5 0;
     -fx-background-color: white;
     -fx-padding: 3;
 }
 
 .table-view .column-header .label {
-    -fx-font-size: 18pt;
-    -fx-font-family: "Droid Sans";
-    -fx-text-fill: black;
-    -fx-alignment: center-left;
-}
-
-.tableCol{
     -fx-font-size: 14pt;
     -fx-font-family: "Droid Sans";
     -fx-text-fill: black;
-    -fx-alignment: center-left;
+    -fx-alignment: CENTER-RIGHT;
+    -fx-padding: 3;
+}
+
+.table-view .table-cell {
+    -fx-alignment: CENTER-RIGHT;
+     /* The rest is from caspian.css */
+
+    -fx-skin: "com.sun.javafx.scene.control.skin.TableCellSkin";
+    -fx-padding: 3;
+
+    -fx-background-color: transparent;
+    -fx-border-color: transparent #EEE transparent #EEE;
+    -fx-border-width: 0 0.5 0 0.5;
+    -fx-border-insets: 5 0 5 0;
+    -fx-cell-size: 24;
+
+    -fx-font-size: 14pt;
+    -fx-font-family: "Droid Sans";
+    -fx-text-fill: black;
+}
+
+.table-row-cell:selected {
+   -fx-background-color: #FFFFFF;
+}
+.table-row-cell:selected .text {
+       -fx-fill: #faa61a;
+
 }
 
 .table-view:focused .table-row-cell:filled:focused:selected {

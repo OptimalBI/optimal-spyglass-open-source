@@ -32,9 +32,7 @@ import com.optimalbi.ServicePricing;
 import com.optimalbi.Services.Service;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
@@ -125,7 +123,7 @@ public class Main extends Application {
     private int doneAreas = 0;
     @SuppressWarnings("FieldCanBeLocal")
     private String viewedRegion = "summary";
-    private String listOrBoxes = "list";
+    private String listOrBoxes = "bpxes";
     private Button summary;
 
 
@@ -980,18 +978,53 @@ public class Main extends Application {
         TableView<Service> tableView = new TableView<>();
         tableView.setFocusTraversable(false);
         tableView.setPrefSize(applicationWidth, applicationHeight);
-        tableView.getItems().addAll(accounts.get(0).getServices());
-        TableColumn<Service,String> serviceNameCol = new TableColumn<>("Service Name");
+        Map<AmazonAccount,Service> accountService = new HashMap<>();
+        for(AmazonAccount acc : accounts){
+            for(Service s : acc.getServices()){
+                accountService.put(acc,s);
+                tableView.getItems().add(s);
+            }
+        }
+
+        //Service Type
+        TableColumn<Service,String> serviceTypeCol = new TableColumn<>("Type");
+        serviceTypeCol.setPrefWidth(65);
+        serviceTypeCol.setCellValueFactory(cellData -> {
+            String serviceType = cellData.getValue().serviceType();
+            serviceType = serviceType.toUpperCase();
+            return new SimpleStringProperty(serviceType);
+        });
+        tableView.getColumns().add(serviceTypeCol);
+
+        //Service Name
+        TableColumn<Service,String> serviceNameCol = new TableColumn<>("Name");
         serviceNameCol.setPrefWidth(200);
         serviceNameCol.setCellValueFactory(cellData -> {
             String serviceName = cellData.getValue().serviceName();
-            StringProperty serviceProperty = new SimpleStringProperty(serviceName);
-            return serviceProperty;
+            return new SimpleStringProperty(serviceName);
         });
-        serviceNameCol.getStyleClass().addAll("tableCol");
         tableView.getColumns().add(serviceNameCol);
-        tableView.getStylesheets().add(styleSheet);
 
+        //Service Size
+        TableColumn<Service,String> serviceSizeCol = new TableColumn<>("Size");
+        serviceSizeCol.setPrefWidth(120);
+        serviceSizeCol.setCellValueFactory(cellData -> {
+            String serviceSize = cellData.getValue().serviceSize();
+            return new SimpleStringProperty(serviceSize);
+        });
+        tableView.getColumns().addAll(serviceSizeCol);
+
+        //Service Price
+        TableColumn<Service,Double> serviceCostCol = new TableColumn<>("Cost $/hr");
+        serviceCostCol.setPrefWidth(100);
+        serviceCostCol.setCellValueFactory(cellData -> {
+            Double cost = cellData.getValue().servicePrice();
+            cost = round(cost,2);
+            return new SimpleObjectProperty<>(cost);
+        });
+        tableView.getColumns().add(serviceCostCol);
+
+        tableView.getStylesheets().add(styleSheet);
         VBox outer = new VBox(tableView);
         outer.setPrefSize(applicationWidth,applicationHeight);
         outer.getStyleClass().add("centrePlaceStyle");
