@@ -112,6 +112,7 @@ public class Main extends Application {
     private ArrayList<AmazonAccount> accounts;
     private List<AmazonRegion> allRegions;
     private List<Region> currentRegions;
+    private List<Integer> versi;
     //Security stuff
     private SimplePBEConfig simplePBEConfig;
     private StandardPBEStringEncryptor encryptor;
@@ -123,7 +124,7 @@ public class Main extends Application {
     private int doneAreas = 0;
     @SuppressWarnings("FieldCanBeLocal")
     private String viewedRegion = "summary";
-    private String listOrBoxes = "bpxes";
+    private String listOrBoxes = "list";
     private Button summary;
 
 
@@ -135,22 +136,24 @@ public class Main extends Application {
         @Override
         public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
             if (!(oldValue.equals(newValue))) {
-                int delayTime = 350;
+                int delayTime = 100;
                 Task<Void> task = new Task<Void>() {
                     @Override
                     protected Void call() throws Exception {
                         Thread.sleep(delayTime);
-                        primaryScreenBounds = Screen.getPrimary().getVisualBounds();
-                        applicationHeight = mainStage.getMaxHeight();
-                        applicationWidth = mainStage.getMaxWidth();
-                        Platform.runLater(() -> border.setTop(createTop()));
-                        Platform.runLater(() -> border.setBottom(createBottom()));
-                        Platform.runLater(() -> border.setLeft(createButtonMenu()));
-                        Platform.runLater(Main.this::updatePaintingBoxes);
+                        applicationHeight = mainStage.getHeight();
+                        applicationWidth = mainStage.getWidth();
+
+                        Platform.runLater(()->{
+                            border.setTop(createTop());
+                            border.setBottom(createBottom());
+                            updatePaintingBoxes();
+                        });
+
                         return null;
                     }
                 };
-//                new Thread(task).start();
+                new Thread(task).start();
             }
         }
     };
@@ -703,9 +706,6 @@ public class Main extends Application {
         ImageView iv1 = guiFactory.imageView("header-logo.png");
         guiComponents.add(iv1);
 
-        //Get application version
-        String version = Main.class.getPackage().getImplementationVersion();
-
         //Text for the title
         Label title = new Label();
         title.setText("OptimalSpyglass - Part of the OptimalBI AWS Toolkit");
@@ -714,35 +714,37 @@ public class Main extends Application {
         guiComponents.add(title);
 
         //Version notification
-        List<Integer> versi = getLatestVersionNumber();
-        logger.debug(String.format("Remote version: %d.%d.%d. Current version: %d.%d.%d.", versi.get(0), versi.get(1), versi.get(2), curVer[0], curVer[1], curVer[2]));
-        //Int varibles to clear my head
-        int curMaj = curVer[0];
-        int curMin = curVer[1];
-        int curPatch = curVer[2];
-        int newMaj = versi.get(0);
-        int newMin = versi.get(1);
-        int newPatch = versi.get(2);
+        if(versi == null) {
+            versi = getLatestVersionNumber();
+            logger.debug(String.format("Remote version: %d.%d.%d. Current version: %d.%d.%d.", versi.get(0), versi.get(1), versi.get(2), curVer[0], curVer[1], curVer[2]));
+            //Int varibles to clear my head
+            int curMaj = curVer[0];
+            int curMin = curVer[1];
+            int curPatch = curVer[2];
+            int newMaj = versi.get(0);
+            int newMin = versi.get(1);
+            int newPatch = versi.get(2);
 
-        boolean newVersion = false;
+            boolean newVersion = false;
 
-        if ((newMaj > curMaj) || (newMaj == curMaj && newMin > curMin) || (newMaj == curMaj && newMin == curMin && newPatch > curPatch)) {
-            newVersion = true;
-        }
-
-        Label versionNotification = new Label("New version available, Click Here");
-        versionNotification.getStyleClass().add("versionText");
-        versionNotification.setMinWidth(220);
-        versionNotification.setAlignment(Pos.CENTER);
-        versionNotification.setOnMouseClicked(MouseEvent -> {
-            try {
-                openWebpage(new URI("https://github.com/OptimalBI/optimal-spyglass-open-source/releases"));
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
+            if ((newMaj > curMaj) || (newMaj == curMaj && newMin > curMin) || (newMaj == curMaj && newMin == curMin && newPatch > curPatch)) {
+                newVersion = true;
             }
-        });
-        if (newVersion) {
-            guiComponents.add(versionNotification);
+
+            Label versionNotification = new Label("New version available, Click Here");
+            versionNotification.getStyleClass().add("versionText");
+            versionNotification.setMinWidth(220);
+            versionNotification.setAlignment(Pos.CENTER);
+            versionNotification.setOnMouseClicked(MouseEvent -> {
+                try {
+                    openWebpage(new URI("https://github.com/OptimalBI/optimal-spyglass-open-source/releases"));
+                } catch (URISyntaxException e) {
+                    e.printStackTrace();
+                }
+            });
+            if (newVersion) {
+                guiComponents.add(versionNotification);
+            }
         }
 
 
