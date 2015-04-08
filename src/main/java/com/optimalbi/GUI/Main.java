@@ -124,7 +124,7 @@ public class Main extends Application {
     private int doneAreas = 0;
     @SuppressWarnings("FieldCanBeLocal")
     private String viewedRegion = "summary";
-    private String listOrBoxes = "list";
+    private String listOrBoxes = "boxes";
     private Button summary;
 
 
@@ -145,8 +145,8 @@ public class Main extends Application {
                         applicationWidth = mainStage.getWidth();
 
                         Platform.runLater(()->{
-                            border.setTop(createTop());
-                            border.setBottom(createBottom());
+//                            border.setTop(createTop());
+//                            border.setBottom(createBottom());
                             updatePaintingBoxes();
                         });
 
@@ -980,10 +980,10 @@ public class Main extends Application {
         TableView<Service> tableView = new TableView<>();
         tableView.setFocusTraversable(false);
         tableView.setPrefSize(applicationWidth, applicationHeight);
-        Map<AmazonAccount,Service> accountService = new HashMap<>();
+        Map<Service,AmazonAccount> accountService = new HashMap<>();
         for(AmazonAccount acc : accounts){
             for(Service s : acc.getServices()){
-                accountService.put(acc,s);
+                accountService.put(s,acc);
                 tableView.getItems().add(s);
             }
         }
@@ -997,6 +997,20 @@ public class Main extends Application {
             return new SimpleStringProperty(serviceType);
         });
         tableView.getColumns().add(serviceTypeCol);
+
+        //Service Account
+        TableColumn<Service,String> serviceAccountCol = new TableColumn<>("Account");
+        serviceAccountCol.setPrefWidth(200);
+        serviceAccountCol.setCellValueFactory(cellData ->{
+            AmazonAccount thisAccount = accountService.get(cellData.getValue());
+            String serviceAccountName = "";
+            if(thisAccount==null){
+                return new SimpleStringProperty(serviceAccountName);
+            } else {
+                return new SimpleStringProperty(thisAccount.getCredentials().getAccountName());
+            }
+        });
+        tableView.getColumns().add(serviceAccountCol);
 
         //Service Name
         TableColumn<Service,String> serviceNameCol = new TableColumn<>("Name");

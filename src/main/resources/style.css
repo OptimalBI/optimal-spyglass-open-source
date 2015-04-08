@@ -370,8 +370,8 @@
 .table-view {
     -fx-base: white;
     -fx-background-color: white;
-    -fx-table-cell-border-color: lightgrey;
-    -fx-table-header-border-color: black;
+    -fx-table-cell-border-color: transparent;
+    -fx-table-header-border-color: transparent;
     -fx-padding: -2;
 }
 
@@ -408,7 +408,7 @@
     -fx-padding: 3;
 
     -fx-background-color: transparent;
-    -fx-border-color: transparent #EEE transparent #EEE;
+    -fx-border-color: transparent transparent transparent transparent;
     -fx-border-width: 0 0.5 0 0.5;
     -fx-border-insets: 5 0 5 0;
     -fx-cell-size: 24;
@@ -419,7 +419,7 @@
 }
 
 .table-row-cell:selected {
-   -fx-background-color: #FFFFFF;
+   -fx-background-color: transparent;
 }
 .table-row-cell:selected .text {
        -fx-fill: #faa61a;
