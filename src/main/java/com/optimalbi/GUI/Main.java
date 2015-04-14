@@ -123,10 +123,22 @@ public class Main extends Application {
     private int totalAreas = 0;
     private int doneAreas = 0;
     @SuppressWarnings("FieldCanBeLocal")
-    private String viewedRegion = "summary";
-    private String listOrBoxes = "boxes";
+    private String viewedRegion = "all";
     private Button summary;
+    private guiModes guimode = guiModes.SUMMARY;
 
+
+    private enum guiModes {
+        LIST,
+        BOXES,
+        ASK_PASSWORD,
+        NEW_PASSWORD,
+        CHANGE_PASSWORD,
+        ASK_CRED,
+        WAITING,
+        SETTINGS,
+        SUMMARY
+    }
 
     private final ChangeListener<Number> paintListener = new ChangeListener<Number>() {
         /*
@@ -144,10 +156,10 @@ public class Main extends Application {
                         applicationHeight = mainStage.getHeight();
                         applicationWidth = mainStage.getWidth();
 
-                        Platform.runLater(()->{
+                        Platform.runLater(() -> {
 //                            border.setTop(createTop());
 //                            border.setBottom(createBottom());
-                            updatePaintingBoxes();
+                            updateCentrePainting();
                         });
 
                         return null;
@@ -241,17 +253,20 @@ public class Main extends Application {
         //Load access keys from file, if they don't exist ask for them
         //TODO: check if keys are valid on load
         if (encryptedPassword.equals("")) {
-            newPassword("");
+            guimode = guiModes.NEW_PASSWORD;
         } else {
-            askForPassword("Please enter password", 0);
+            guimode = guiModes.ASK_PASSWORD;
         }
+        updateCentrePainting();
     }
 
     private void newPassword(String failedMessage) {
+        double textWidth = 120;
+        double boxWidth = 160;
+
         if (failedMessage == null) {
             failedMessage = "";
         }
-        resetDialog();
         ArrayList<Node> c = new ArrayList<>();
         Pos alignment = Pos.BASELINE_LEFT;
 
@@ -269,20 +284,20 @@ public class Main extends Application {
 
         //TextField
         Label fLabel = new Label("Password:");
-        fLabel.setMinWidth(120);
+        fLabel.setMinWidth(textWidth);
         fLabel.setAlignment(alignment);
         PasswordField field = new PasswordField();
-        field.setMinWidth(160);
+        field.setMinWidth(boxWidth);
         HBox fBox = new HBox(fLabel, field);
         fBox.setAlignment(alignment);
 
 
         //TextField2
         Label sFLabel = new Label("Confirmation:");
-        sFLabel.setMinWidth(120);
+        sFLabel.setMinWidth(textWidth);
         sFLabel.setAlignment(alignment);
         PasswordField secondField = new PasswordField();
-        secondField.setMinWidth(160);
+        secondField.setMinWidth(boxWidth);
         HBox sFBox = new HBox(sFLabel, secondField);
         sFBox.setAlignment(alignment);
 
@@ -290,7 +305,7 @@ public class Main extends Application {
         c.add(sFBox);
 
         //Go button
-        Button okBtn = guiFactory.createButton("Okay", 120, 12);
+        Button okBtn = guiFactory.createButton("Okay", textWidth, 12);
         HBox btnBox = new HBox(okBtn);
         btnBox.setMinWidth(applicationWidth / 3.2);
         btnBox.setAlignment(alignment);
@@ -306,14 +321,12 @@ public class Main extends Application {
                     decryptedPassword = field.getText();
                     encryptor.setPassword(decryptedPassword);
                     saveSettings();
-                    resetDialog();
-                    askForCredentials();
+                    guimode = guiModes.ASK_CRED;
+                    updateCentrePainting();
                 } else {
-                    resetDialog();
                     newPassword("Please enter the same password twice");
                 }
             } else {
-                resetDialog();
                 newPassword("Please enter a valid password");
             }
         };
@@ -322,28 +335,18 @@ public class Main extends Application {
         okBtn.setOnAction(go);
 
         VBox layout = new VBox();
-        layout.setAlignment(alignment);
         layout.getChildren().addAll(c);
+        layout.getStyleClass().add("settings");
         layout.getStylesheets().add(styleSheet);
-        layout.getStyleClass().add("popup");
-        layout.setPrefSize(applicationWidth, applicationHeight);
+        layout.setMaxWidth(textWidth + boxWidth);
+        layout.setMaxHeight(120);
+        layout.setAlignment(Pos.CENTER);
 
         setCentre(layout);
-
-//        dialog = guiFactory.setupDialog(applicationWidth / 3.2, applicationHeight / 2, layout);
-//        dialog.show(mainStage);
-//        dialog.setAutoHide(true);
     }
 
     private void setCentre(Node centre) {
-        border.setCenter(centre);
-    }
-
-    private void resetDialog() {
-        if (dialog != null) {
-            dialog.hide();
-            dialog = null;
-        }
+        Platform.runLater(() -> border.setCenter(centre));
     }
 
     private void askForPassword(String promptText, int attempts) {
@@ -414,11 +417,13 @@ public class Main extends Application {
                 decryptedPassword = passwordField.getText();
                 simplePBEConfig.setPassword(decryptedPassword);
                 encryptor.initialize();
-                border.setCenter(waitingCentre());
+                guimode = guiModes.WAITING;
+                updateCentrePainting();
                 getAccessKeys();
                 if ((credentials.size() == 0)) {
                     //If there are no credentials saved then ask for them
-                    askForCredentials();
+                    guimode = guiModes.ASK_CRED;
+                    updateCentrePainting();
                 } else {
                     //Else go and populate the services with their controllers
                     createAccounts();
@@ -433,7 +438,7 @@ public class Main extends Application {
         layout.getStyleClass().add("settings");
         layout.getStylesheets().add(styleSheet);
         layout.setMaxWidth(textWidth + boxWidth);
-        layout.setMaxHeight(prompt.getPrefHeight()*3);
+        layout.setMaxHeight(prompt.getPrefHeight() * 3);
         layout.setAlignment(Pos.CENTER);
 
         setCentre(layout);
@@ -477,7 +482,11 @@ public class Main extends Application {
         Button regions = guiFactory.createButton("Regions");
         regions.setAlignment(alignment);
         regions.getStyleClass().add("barItems");
-        regions.setOnAction(ActionEvent -> selectRegions());
+        regions.setOnAction(ActionEvent ->{
+            if(!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
+                selectRegions();
+            }
+        });
         guiComponents.add(regions);
 
         //Update button - This button repolls the AWS API
@@ -485,7 +494,9 @@ public class Main extends Application {
         update.setAlignment(alignment);
         update.getStyleClass().add("barItems");
         update.setOnAction(ActionEvent -> {
-            Platform.runLater(Main.this::createAccounts);
+            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
+                Platform.runLater(Main.this::createAccounts);
+            }
         });
 
         guiComponents.add(update);
@@ -494,14 +505,24 @@ public class Main extends Application {
         Button manageCredentials = guiFactory.createButton("Add/Remove credentials");
         manageCredentials.setAlignment(alignment);
         manageCredentials.getStyleClass().add("barItems");
-        manageCredentials.setOnAction(event -> drawAccountManagement());
+        manageCredentials.setOnAction(event -> {
+            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
+                guimode = guiModes.SETTINGS;
+                updateCentrePainting();
+            }
+        });
         guiComponents.add(manageCredentials);
 
         //Change password
         Button changePassword = guiFactory.createButton("Change password");
         changePassword.setAlignment(alignment);
         changePassword.getStyleClass().add("barItems");
-        changePassword.setOnAction(event -> changePassword(""));
+        changePassword.setOnAction(event -> {
+            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
+                guimode = guiModes.CHANGE_PASSWORD;
+                updateCentrePainting();
+            }
+        });
         guiComponents.add(changePassword);
 
         //Exit button
@@ -564,8 +585,8 @@ public class Main extends Application {
         Button okay = guiFactory.createButton("Okay", (textWidth + boxWidth) / 2, 20);
         Button cancel = guiFactory.createButton("Cancel", (textWidth + boxWidth) / 2, 20);
         cancel.setOnAction(event -> {
-            viewedRegion = "summary";
-            updatePaintingBoxes();
+            guimode = guiModes.SUMMARY;
+            updateCentrePainting();
         });
         HBox buttons = new HBox(okay, cancel);
         buttons.getStyleClass().add("popupButtons");
@@ -596,13 +617,7 @@ public class Main extends Application {
                 loadSettings();
                 writeCredentials();
 
-                if (dialog != null) {
-                    dialog.hide();
-                    dialog = null;
-                }
             } else {
-                dialog.hide();
-                dialog = null;
                 changePassword("Old password incorrect");
             }
         };
@@ -714,7 +729,7 @@ public class Main extends Application {
         guiComponents.add(title);
 
         //Version notification
-        if(versi == null) {
+        if (versi == null) {
             versi = getLatestVersionNumber();
             logger.debug(String.format("Remote version: %d.%d.%d. Current version: %d.%d.%d.", versi.get(0), versi.get(1), versi.get(2), curVer[0], curVer[1], curVer[2]));
             //Int varibles to clear my head
@@ -817,25 +832,38 @@ public class Main extends Application {
         allFilterLabel.getStyleClass().add("toolbarLabel");
         toolButtons.add(allFilterLabel);
 
-        summary = guiFactory.createButton("Summary", -1, -1);
+        summary = guiFactory.createButton("S", -1, -1);
         summary.setOnAction(ActionEvent -> {
-            viewedRegion = "summary";
-            updatePaintingBoxes();
+            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
+                guimode = guiModes.SUMMARY;
+                updateCentrePainting();
+            }
         });
-        summary.setMinWidth(minWidth);
+        summary.setMinWidth(40);
         toolButtons.add(summary);
 
-        Button all = guiFactory.createButton("All", -1, -1);
-        all.setOnAction(ActionEvent -> {
-            viewedRegion = "all";
-            updatePaintingBoxes();
+        Button box = guiFactory.createButton("B", -1, -1);
+        box.setOnAction(ActionEvent -> {
+            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
+                guimode = guiModes.BOXES;
+                updateCentrePainting();
+            }
         });
-        all.setMinWidth(minWidth);
-        toolButtons.add(all);
+        box.setMinWidth(40);
+        toolButtons.add(box);
 
-        javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
-        spacer.setPrefWidth(18);
-        toolButtons.add(spacer);
+        Button list = guiFactory.createButton("L", -1, -1);
+        list.setOnAction(ActionEvent -> {
+            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
+                guimode = guiModes.LIST;
+                updateCentrePainting();
+            }
+        });
+        list.setMinWidth(40);
+        toolButtons.add(list);
+
+        Separator separator = new Separator();
+        toolButtons.add(separator);
 
         Label regionLabel = new Label("Region Filter: ");
         regionLabel.getStyleClass().add("toolbarLabel");
@@ -849,8 +877,10 @@ public class Main extends Application {
                 adding = guiFactory.createButton(region.getName(), -1, -1);
             }
             adding.setOnAction(ActionEvent -> {
-                viewedRegion = region.getName();
-                updatePaintingBoxes();
+                if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
+                    viewedRegion = region.getName();
+                    updateCentrePainting();
+                }
             });
             toolButtons.add(adding);
         }
@@ -864,7 +894,7 @@ public class Main extends Application {
         return toolBar;
     }
 
-    private void updatePaintingBoxes() {
+    private void updateCentrePainting() {
         if (!redrawHook) {
             //The first time we draw, hook the redraw listener to the changes in the Main's size
             Task task = new Task<Void>() {
@@ -878,29 +908,50 @@ public class Main extends Application {
             new Thread(task).start();
             redrawHook = true;
         }
-        if (!viewedRegion.equals("summary")) {
-            BigDecimal iW = new BigDecimal((((mainStage.getWidth()) - 70) / ServiceDraw.serviceWidth));
-            int instancesWide = iW.intValue();
-            drawServiceBoxes(instancesWide);
-        } else {
-            drawSummary();
+        switch (guimode) {
+            case NEW_PASSWORD:
+                newPassword("");
+                break;
+            case ASK_PASSWORD:
+                askForPassword("Please enter password", 0);
+                break;
+            case ASK_CRED:
+                askForCredentials();
+                break;
+            case SUMMARY:
+                drawSummary();
+                break;
+            case BOXES:
+                drawServiceBoxes();
+                break;
+            case LIST:
+                drawListView();
+                break;
+            case WAITING:
+                Platform.runLater(() -> border.setCenter(waitingCentre()));
+                break;
+            case SETTINGS:
+                drawAccountManagement();
+                break;
+            case CHANGE_PASSWORD:
+                changePassword("");
+                break;
+            default:
+                drawSummary();
+                break;
         }
     }
 
     /**
      * These loops create the section of the GUI where it is divided by account, the first loop loops over all currently added AWS accounts
      * The second loop goes over the AWS controllers, checks if they belong to the current looping account and if so draws them in their rows
-     * If the rows exceed instancesWide it starts a new row
-     *
-     * @param instancesWide The number of instances to draw in each row.
      */
-    private void drawServiceBoxes(int instancesWide) {
-        if(listOrBoxes.equalsIgnoreCase("list")){
-            drawListView();
-            return;
-        }
+    private void drawServiceBoxes() {
 
-        ServiceDraw draw = new ServiceDraw(styleSheet,guiFactory,mainStage);
+        BigDecimal iW = new BigDecimal((((mainStage.getWidth()) - 70) / ServiceDraw.serviceWidth));
+        int instancesWide = iW.intValue();
+
+        ServiceDraw draw = new ServiceDraw(styleSheet, guiFactory, mainStage);
         VBox allInstances = new VBox();
 
         for (AmazonCredentials credential : credentials) {
@@ -922,7 +973,6 @@ public class Main extends Application {
 
                         if (service.serviceType().equalsIgnoreCase("ec2")) {
                             Runnable command = () -> {
-                                resetDialog();
                                 dialog = drawGraph(account.getCredentials(), service, mainStage.getScene());
                                 dialog.setAutoHide(true);
                                 dialog.show(mainStage);
@@ -976,35 +1026,34 @@ public class Main extends Application {
         Platform.runLater(() -> border.setCenter(scrollPane));
     }
 
-    private void drawListView(){
+    private void drawListView() {
         TableView<Service> tableView = new TableView<>();
         tableView.setFocusTraversable(false);
         tableView.setPrefSize(applicationWidth, applicationHeight);
-        Map<Service,AmazonAccount> accountService = new HashMap<>();
-        for(AmazonAccount acc : accounts){
-            for(Service s : acc.getServices()){
-                accountService.put(s,acc);
+        Map<Service, AmazonAccount> accountService = new HashMap<>();
+        for (AmazonAccount acc : accounts) {
+            for (Service s : acc.getServices()) {
+                accountService.put(s, acc);
                 tableView.getItems().add(s);
             }
         }
 
         //Service Type
-        TableColumn<Service,String> serviceTypeCol = new TableColumn<>("Type");
-        serviceTypeCol.setPrefWidth(65);
+        TableColumn<Service, String> serviceTypeCol = new TableColumn<>("Type");
+        serviceTypeCol.setPrefWidth(95);
         serviceTypeCol.setCellValueFactory(cellData -> {
             String serviceType = cellData.getValue().serviceType();
-            serviceType = serviceType.toUpperCase();
             return new SimpleStringProperty(serviceType);
         });
         tableView.getColumns().add(serviceTypeCol);
 
         //Service Account
-        TableColumn<Service,String> serviceAccountCol = new TableColumn<>("Account");
+        TableColumn<Service, String> serviceAccountCol = new TableColumn<>("Account");
         serviceAccountCol.setPrefWidth(200);
-        serviceAccountCol.setCellValueFactory(cellData ->{
+        serviceAccountCol.setCellValueFactory(cellData -> {
             AmazonAccount thisAccount = accountService.get(cellData.getValue());
             String serviceAccountName = "";
-            if(thisAccount==null){
+            if (thisAccount == null) {
                 return new SimpleStringProperty(serviceAccountName);
             } else {
                 return new SimpleStringProperty(thisAccount.getCredentials().getAccountName());
@@ -1013,7 +1062,7 @@ public class Main extends Application {
         tableView.getColumns().add(serviceAccountCol);
 
         //Service Name
-        TableColumn<Service,String> serviceNameCol = new TableColumn<>("Name");
+        TableColumn<Service, String> serviceNameCol = new TableColumn<>("Name");
         serviceNameCol.setPrefWidth(200);
         serviceNameCol.setCellValueFactory(cellData -> {
             String serviceName = cellData.getValue().serviceName();
@@ -1022,7 +1071,7 @@ public class Main extends Application {
         tableView.getColumns().add(serviceNameCol);
 
         //Service Size
-        TableColumn<Service,String> serviceSizeCol = new TableColumn<>("Size");
+        TableColumn<Service, String> serviceSizeCol = new TableColumn<>("Size");
         serviceSizeCol.setPrefWidth(120);
         serviceSizeCol.setCellValueFactory(cellData -> {
             String serviceSize = cellData.getValue().serviceSize();
@@ -1031,31 +1080,39 @@ public class Main extends Application {
         tableView.getColumns().addAll(serviceSizeCol);
 
         //Service Price
-        TableColumn<Service,Double> serviceCostCol = new TableColumn<>("Cost $/hr");
+        TableColumn<Service, Double> serviceCostCol = new TableColumn<>("Cost $/hr");
         serviceCostCol.setPrefWidth(100);
         serviceCostCol.setCellValueFactory(cellData -> {
             Double cost = cellData.getValue().servicePrice();
-            cost = round(cost,2);
+            cost = round(cost, 2);
             return new SimpleObjectProperty<>(cost);
         });
         tableView.getColumns().add(serviceCostCol);
 
+        //Service State
+        TableColumn<Service, String> serviceStateCol = new TableColumn<>("State");
+        serviceStateCol.setPrefWidth(100);
+        serviceStateCol.setCellValueFactory(cellData ->{
+            String serviceState = cellData.getValue().serviceState();
+            return new SimpleStringProperty(serviceState);
+        });
+        tableView.getColumns().add(serviceStateCol);
+
         tableView.getStylesheets().add(styleSheet);
         VBox outer = new VBox(tableView);
-        outer.setPrefSize(applicationWidth,applicationHeight);
+        outer.setPrefSize(applicationWidth, applicationHeight);
         outer.getStyleClass().add("centrePlaceStyle");
         outer.getStylesheets().add(styleSheet);
 
-        Platform.runLater(()-> border.setCenter(outer));
+        Platform.runLater(() -> border.setCenter(outer));
     }
 
     private void askForCredentials() {
         double textWidth = 160; //The minimum size the labels take up (aligns the Main)
+        double boxWidth = 680 - (textWidth + 25);
         fields = new HashMap<>(); //Reset the fields collection so we can use it from the callback method
-        Pos alignment = Pos.TOP_LEFT;
+        Pos alignment = Pos.CENTER_LEFT;
 
-        VBox outerLayout = new VBox();
-        outerLayout.setPrefWidth(mainStage.getWidth() / 2);
         List<Node> c = new ArrayList<>();
 
         //Label
@@ -1066,7 +1123,7 @@ public class Main extends Application {
         Label accountNameTitle = new Label("Account Name: ");
         accountNameTitle.setPrefWidth(textWidth);
         fields.put("account name", new TextField());
-        fields.get("account name").setPrefWidth(outerLayout.getPrefWidth() - textWidth);
+        fields.get("account name").setPrefWidth(boxWidth);
         HBox accountNameCombo = new HBox(accountNameTitle, fields.get("account name"));
         accountNameCombo.setAlignment(alignment);
         c.add(accountNameCombo);
@@ -1075,7 +1132,7 @@ public class Main extends Application {
         Label accessKeyTitle = new Label("Access Key: ");
         accessKeyTitle.setPrefWidth(textWidth);
         fields.put("access key", new TextField());
-        fields.get("access key").setPrefWidth(outerLayout.getPrefWidth() - textWidth);
+        fields.get("access key").setPrefWidth(boxWidth);
         HBox accessKeyCombo = new HBox(accessKeyTitle, fields.get("access key"));
         accessKeyCombo.setAlignment(alignment);
         c.add(accessKeyCombo);
@@ -1084,7 +1141,7 @@ public class Main extends Application {
         Label secretKeyTitle = new Label("Secret Key: ");
         secretKeyTitle.setPrefWidth(textWidth);
         fields.put("secret key", new TextField());
-        fields.get("secret key").setPrefWidth(outerLayout.getPrefWidth() - textWidth);
+        fields.get("secret key").setPrefWidth(boxWidth);
         fields.get("secret key").setOnAction(event -> saveCredentials());
         HBox secretKeyCombo = new HBox(secretKeyTitle, fields.get("secret key"));
         secretKeyCombo.setAlignment(alignment);
@@ -1099,28 +1156,26 @@ public class Main extends Application {
             if (credentials == null || credentials.size() == 0) {
                 System.exit(404);
             } else {
-                viewedRegion = "summary";
-                updatePaintingBoxes();
+                guimode = guiModes.SETTINGS;
+                updateCentrePainting();
             }
         });
         HBox buttons = new HBox(okay, cancel);
-        buttons.setPrefWidth(outerLayout.getPrefWidth());
+        buttons.setPrefWidth(boxWidth);
         buttons.setAlignment(alignment);
-        buttons.getStyleClass().add("subpopup");
+        buttons.getStyleClass().add("popupButtons2");
         c.add(buttons);
 
+        VBox outerLayout = new VBox();
         outerLayout.getStylesheets().add(styleSheet);
-        outerLayout.getStyleClass().add("popup");
+        outerLayout.getStyleClass().add("settings");
+        outerLayout.setAlignment(Pos.CENTER);
+        outerLayout.setMaxHeight(120);
+        outerLayout.setMaxWidth(680);
         outerLayout.getChildren().addAll(c);
         outerLayout.setAlignment(alignment);
 
         setCentre(outerLayout);
-
-//        dialog = guiFactory.setupDialog(-1, -1, outerLayout);
-//        dialog.setX(mainStage.getX() + mainStage.getWidth() / 2 - dialog.getWidth() / 2);
-//        dialog.setY(mainStage.getY() + mainStage.getHeight() / 2 - dialog.getHeight() / 2);
-//        dialog.show(mainStage);
-//        dialog.setAutoHide(true);
     }
 
     private void saveCredentials() {
@@ -1249,7 +1304,8 @@ public class Main extends Application {
     }
 
     private void createAccounts() {
-        border.setCenter(waitingCentre());
+        guimode = guiModes.WAITING;
+        updateCentrePainting();
         currentRegions = new ArrayList<>();
         //If the region is currently marked as one we are interested in then add it to the current regions collection
         currentRegions.addAll(allRegions.stream().filter(AmazonRegion::getActive).map(AmazonRegion::getRegion).collect(Collectors.toList()));
@@ -1286,7 +1342,8 @@ public class Main extends Application {
                     }
                     //If all controllers are ready then draw the Main
                     if (ready) {
-                        updatePaintingBoxes();
+                        guimode = guiModes.SUMMARY;
+                        updateCentrePainting();
                     }
                 }
             });
@@ -1369,15 +1426,15 @@ public class Main extends Application {
         //Add button
         Button add = guiFactory.createButton("Add", buttonWidth, buttonHeight / 2);
         add.setOnAction(event -> {
-            resetDialog();
-            askForCredentials();
+            guimode = guiModes.ASK_CRED;
+            updateCentrePainting();
         });
 
         //Close button
         Button close = guiFactory.createButton("Close", buttonWidth, buttonHeight / 2);
         close.setOnAction(event -> {
-            updatePaintingBoxes();
-            resetDialog();
+            guimode = guiModes.SUMMARY;
+            updateCentrePainting();
         });
         HBox buttons = new HBox(add, close);
         buttons.setPrefWidth(allCredentials.getPrefWidth());
@@ -1441,9 +1498,10 @@ public class Main extends Application {
             if (toChange.get()) {
                 saveSettings();
                 viewedRegion = "all";
-                border.setCenter(waitingCentre());
-                createAccounts();
+                guimode = guiModes.WAITING;
+                updateCentrePainting();
                 border.setTop(createTop());
+                createAccounts();
             }
         });
 
@@ -1657,7 +1715,6 @@ public class Main extends Application {
         close.setAlignment(Pos.BOTTOM_RIGHT);
         close.setOnAction(event -> {
             popup.hide();
-            resetDialog();
         });
         buttons.getChildren().add(close);
         buttons.setAlignment(Pos.BOTTOM_RIGHT);

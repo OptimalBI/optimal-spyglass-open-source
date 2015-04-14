@@ -77,6 +77,24 @@
     -fx-padding: 5;
 }
 
+.separator {
+    -fx-base: black;
+    -fx-vpos: center;
+    -fx-padding: 5;
+}
+
+.separator .line {
+    /*-fx-border-style: segments(5, 5);*/
+    -fx-border-width: 0.5;
+    -fx-vpos: center;
+}
+
+.separator:vertical .line {
+    -fx-vpos: center;
+    -fx-background-color: null;
+    -fx-border-color:  transparent derive(-fx-background,-20%) transparent transparent;
+}
+
 .otherBotStyle{
     -fx-spacing: 0;
     -fx-padding: 0.5;
@@ -104,7 +122,7 @@
     -fx-font-size: 18px;
     -fx-text-fill: black;
     -fx-spacing: 1;
-    -fx-padding: 5;
+    -fx-padding: 8;
     -fx-border-color: #faa61a;
     -fx-background-color: white;
 }
@@ -123,8 +141,8 @@
     -fx-font-family: "Droid Sans";
     -fx-font-size: 18px;
     -fx-text-fill: black;
-    -fx-spacing: 5;
-    -fx-padding: 0;
+    -fx-spacing: 8;
+    -fx-padding: 2;
 }
 
 .settings {
@@ -188,7 +206,7 @@
 }
 
 .popupButtons2 {
-    -fx-spacing: 0;
+    -fx-spacing: 4;
     -fx-padding: 5;
 }
 
@@ -424,6 +442,16 @@
 .table-row-cell:selected .text {
        -fx-fill: #faa61a;
 
+}
+
+.table-row-cell:filled:selected {
+  -fx-background: -fx-control-inner-background ;
+  -fx-background-color: -fx-table-cell-border-color, -fx-background ;
+  -fx-background-insets: 0, 0 0 1 0 ;
+  -fx-table-cell-border-color: derive(-fx-color, 5%);
+}
+.table-row-cell:odd:filled:selected {
+  -fx-background: -fx-control-inner-background-alt ;
 }
 
 .table-view:focused .table-row-cell:filled:focused:selected {

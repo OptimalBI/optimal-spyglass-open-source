@@ -33,8 +33,8 @@ import java.util.stream.Collectors;
 public class ServiceDraw {
     public static final int buttonWidth = 40;
     public static final int buttonHeight = buttonWidth;
-    public static final int serviceWidth = 260;
-    public static int serviceHeight = 250;
+    public static final int serviceWidth = 240;
+    public static int serviceHeight = 220;
     public static int labelWidth = serviceWidth / 2;
     public static final int textWidth = serviceWidth - labelWidth;
     private final String stylesheet;
@@ -163,24 +163,14 @@ public class ServiceDraw {
 
         //Instance Name
         Label instanceName = new Label(service.serviceName());
+        if(service.serviceName().equals("")){
+            instanceName = new Label(service.serviceID());
+        }
         instanceName.setPrefWidth(serviceWidth);
         instanceName.setAlignment(Pos.CENTER);
         instanceName.getStylesheets().add(stylesheet);
         instanceName.getStyleClass().add("instanceName");
         c.add(instanceName);
-
-        //Instance ID
-        Label instanceIDLabel = new Label("Service ID: ");
-        instanceIDLabel.setPrefWidth(labelWidth);
-        instanceIDLabel.setAlignment(Pos.CENTER_RIGHT);
-        instanceIDLabel.getStyleClass().add("guiLabel");
-        Label instanceID = new Label(service.serviceID());
-        instanceID.setPrefWidth(labelWidth);
-
-        HBox iID = new HBox(instanceIDLabel, instanceID);
-        iID.setPrefWidth(serviceWidth);
-        iID.setAlignment(align);
-        c.add(iID);
 
         //EC2 Size
         Label instanceSizeLabel = new Label("Size: ");
@@ -383,24 +373,14 @@ public class ServiceDraw {
 
         //Instance Name
         Label instanceName = new Label(service.serviceName());
+        if(service.serviceName().equals("")){
+            instanceName = new Label(service.serviceID());
+        }
         instanceName.setPrefWidth(serviceWidth);
         instanceName.setAlignment(Pos.CENTER);
         instanceName.getStylesheets().add(stylesheet);
         instanceName.getStyleClass().add("instanceName");
         c.add(instanceName);
-
-        //Instance ID
-        Label dbName = new Label("DB Name: ");
-        dbName.setPrefWidth(labelWidth);
-        dbName.setAlignment(Pos.CENTER_RIGHT);
-        dbName.getStyleClass().add("guiLabel");
-        Label instanceID = new Label(service.serviceID());
-        instanceID.setPrefWidth(labelWidth);
-
-        HBox iID = new HBox(dbName, instanceID);
-        iID.setPrefWidth(serviceWidth);
-        iID.setAlignment(align);
-        c.add(iID);
 
         //EC2 Size
         Label instanceSizeLabel = new Label("Size: ");
@@ -526,24 +506,14 @@ public class ServiceDraw {
 
         //Instance Name
         Label instanceName = new Label(service.serviceName());
+        if(service.serviceName().equals("")){
+            instanceName = new Label(service.serviceID());
+        }
         instanceName.setPrefWidth(serviceWidth);
         instanceName.setAlignment(Pos.CENTER);
         instanceName.getStylesheets().add(stylesheet);
         instanceName.getStyleClass().add("instanceName");
         c.add(instanceName);
-
-        //Instance ID
-        Label instanceIDLabel = new Label("Service ID: ");
-        instanceIDLabel.setPrefWidth(labelWidth);
-        instanceIDLabel.setAlignment(Pos.CENTER_RIGHT);
-        instanceIDLabel.getStyleClass().add("guiLabel");
-        Label instanceID = new Label(service.serviceID());
-        instanceID.setPrefWidth(labelWidth);
-
-        HBox iID = new HBox(instanceIDLabel, instanceID);
-        iID.setPrefWidth(serviceWidth);
-        iID.setAlignment(align);
-        c.add(iID);
 
         //EC2 Size
         Label instanceSizeLabel = new Label("Size: ");
