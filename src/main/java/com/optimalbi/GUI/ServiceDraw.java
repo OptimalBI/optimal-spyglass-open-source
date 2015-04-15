@@ -55,6 +55,8 @@ public class ServiceDraw {
             drawing = drawRDS(service);
         } else if (service.serviceType().equalsIgnoreCase("redshift")) {
             drawing = drawRedshift(service, buttons);
+        } else if (service.serviceType().equalsIgnoreCase("dynamodb")){
+            drawing = drawDynamoDB(service,buttons);
         } else {
             drawing = drawGeneric(service);
         }
@@ -440,7 +442,7 @@ public class ServiceDraw {
         }
         c.add(instanceState);
 
-        List<GuiButton> guiButtons = addRDSButtons(service,buttons);
+        List<GuiButton> guiButtons = addRDSButtons(service, buttons);
 
         GuiButton[] finalButtons = new GuiButton[guiButtons.size()];
         finalButtons = guiButtons.toArray(finalButtons);
@@ -573,7 +575,7 @@ public class ServiceDraw {
         }
         c.add(instanceState);
 
-        List<GuiButton> guiButtons = addRedshiftButtons(service,buttons);
+        List<GuiButton> guiButtons = addRedshiftButtons(service, buttons);
 
         GuiButton[] finalButtons = new GuiButton[guiButtons.size()];
         finalButtons = guiButtons.toArray(finalButtons);
@@ -685,6 +687,108 @@ public class ServiceDraw {
         GuiButton tag = new PictureButton("T",tagCommand,null);
         buttons.add(tag);
 
+        return buttons;
+    }
+
+    private VBox drawDynamoDB(Service service, GuiButton... buttons) {
+        VBox drawing = new VBox();
+
+        Pos align = Pos.CENTER;
+
+        List<Node> c = new ArrayList<>();
+
+        //Instance Type
+        Label instanceType = new Label(stringCap(service.serviceType()));
+        instanceType.setAlignment(Pos.CENTER);
+        instanceType.getStyleClass().add("DBTitle");
+        instanceType.setPrefWidth(serviceWidth);
+        c.add(instanceType);
+
+        //TODO: Remove temp region label
+        Label regionName;
+        if (Service.regionNames().containsKey(service.serviceRegion().getName())) {
+            regionName = new Label(Service.regionNames().get(service.serviceRegion().getName()));
+        } else {
+            regionName = new Label(service.serviceID());
+        }
+        regionName.setPrefWidth(serviceWidth);
+        regionName.setAlignment(Pos.CENTER);
+        regionName.getStyleClass().add("regionTitle");
+        c.add(regionName);
+
+        //Instance Name
+        Label instanceName = new Label(service.serviceName());
+        if(service.serviceName().equals("")){
+            instanceName = new Label(service.serviceID());
+        }
+        instanceName.setPrefWidth(serviceWidth);
+        instanceName.setAlignment(Pos.CENTER);
+        instanceName.getStylesheets().add(stylesheet);
+        instanceName.getStyleClass().add("instanceName");
+        c.add(instanceName);
+;
+        //Size
+        Label instanceSizeLabel = new Label("Rate: ");
+        instanceSizeLabel.setPrefWidth(labelWidth/2);
+        instanceSizeLabel.setAlignment(Pos.CENTER_RIGHT);
+        instanceSizeLabel.getStyleClass().add("guiLabel");
+        Label instanceSize = new Label(service.serviceSize());
+        instanceSize.setPrefWidth(160);
+
+
+
+        HBox sizeBox = new HBox(instanceSizeLabel, instanceSize);
+        sizeBox.setPrefWidth(serviceWidth);
+        sizeBox.setAlignment(align);
+        c.add(sizeBox);
+
+        Label instanceCostLabel = new Label("Cost: ");
+        instanceCostLabel.setPrefWidth(labelWidth/2);
+        instanceCostLabel.setAlignment(Pos.CENTER_RIGHT);
+        instanceCostLabel.getStyleClass().add("guiLabel");
+        Label instanceCost = new Label("Coming Soon!");
+        instanceCost.setPrefWidth(160);
+
+        HBox costBox = new HBox(instanceCostLabel, instanceCost);
+        costBox.setPrefWidth(serviceWidth);
+        costBox.setAlignment(align);
+        c.add(costBox);
+
+
+        //Instance State
+        Label instanceState = new Label(service.serviceState().toLowerCase());
+        instanceState.setAlignment(Pos.CENTER);
+        instanceState.setPrefWidth(serviceWidth);
+        if (Service.runningTitles().contains(service.serviceState().toLowerCase())) {
+            instanceState.setTextFill(Color.GREEN);
+        } else if (service.serviceState().equalsIgnoreCase("stopped")) {
+            instanceState.setTextFill(Color.RED);
+        } else {
+            instanceState.setTextFill(Color.ORANGERED);
+        }
+        c.add(instanceState);
+
+        List<GuiButton> guiButtons = addDynamoDBButtons(service, buttons);
+
+        GuiButton[] finalButtons = new GuiButton[guiButtons.size()];
+        finalButtons = guiButtons.toArray(finalButtons);
+
+        HBox buttonBox = createButtons(finalButtons);
+        c.add(buttonBox);
+
+        drawing.getChildren().addAll(c);
+        drawing.setAlignment(Pos.TOP_CENTER);
+
+        drawing.setPrefHeight(serviceHeight);
+        drawing.setMinWidth(serviceWidth);
+        drawing.getStylesheets().add(stylesheet);
+        drawing.getStyleClass().add("instance");
+        return drawing;
+    }
+
+    private List<GuiButton> addDynamoDBButtons(Service service, GuiButton... currentButtons){
+        List<GuiButton> buttons = new ArrayList<>();
+        Collections.addAll(buttons, currentButtons);
         return buttons;
     }
 

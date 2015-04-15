@@ -133,10 +133,6 @@
     -fx-text-fill: black;
 }
 
-.instance: hover {
-    -fx-border-color: #f7931e;
-}
-
 .instanceRows {
     -fx-font-family: "Droid Sans";
     -fx-font-size: 18px;
@@ -210,6 +206,10 @@
     -fx-padding: 5;
 }
 
+.extraBox{
+    -fx-spacing: 4;
+}
+
 .popup {
     -fx-font-family: "Droid Sans";
     -fx-font-size: 18px;
@@ -271,6 +271,12 @@
     -fx-font-family: "Droid Sans";
     -fx-font-size: 26px;
     -fx-text-fill: red;
+}
+
+.DBTitle{
+    -fx-font-family: "Droid Sans";
+    -fx-font-size: 26px;
+    -fx-text-fill: darkblue;
 }
 
 .rdsTitle{
@@ -414,12 +420,12 @@
     -fx-font-size: 14pt;
     -fx-font-family: "Droid Sans";
     -fx-text-fill: black;
-    -fx-alignment: CENTER-RIGHT;
+    -fx-alignment: CENTER-LEFT;
     -fx-padding: 3;
 }
 
 .table-view .table-cell {
-    -fx-alignment: CENTER-RIGHT;
+    -fx-alignment: CENTER-LEFT;
      /* The rest is from caspian.css */
 
     -fx-skin: "com.sun.javafx.scene.control.skin.TableCellSkin";
@@ -433,15 +439,17 @@
 
     -fx-font-size: 14pt;
     -fx-font-family: "Droid Sans";
-    -fx-text-fill: black;
+}
+
+.cellLeft{
+    -fx-alignment: CENTER-LEFT;
 }
 
 .table-row-cell:selected {
    -fx-background-color: transparent;
 }
 .table-row-cell:selected .text {
-       -fx-fill: #faa61a;
-
+       -fx-fill: transparent;
 }
 
 .table-row-cell:filled:selected {

@@ -26,13 +26,16 @@ import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsResult;
 import com.optimalbi.AmazonAccount;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
 import com.optimalbi.Controller.Containers.AmazonRegion;
+import com.optimalbi.GUI.TjfxFactory.NullSelectionModel;
 import com.optimalbi.GUI.TjfxFactory.PictureButton;
 import com.optimalbi.GUI.TjfxFactory.TjfxFactory;
 import com.optimalbi.ServicePricing;
 import com.optimalbi.Services.Service;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.property.*;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
@@ -57,6 +60,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.stage.Popup;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -270,13 +274,22 @@ public class Main extends Application {
         ArrayList<Node> c = new ArrayList<>();
         Pos alignment = Pos.BASELINE_LEFT;
 
+        //Info Text
+        Text infoText = new Text("TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest \n" +
+                "TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest \n" +
+                "TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest \n" +
+                "TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest ");
+        c.add(infoText);
+
         //Prompt Text
         Label promptLabel = new Label("Please enter the password you want use for this application");
+        promptLabel.setPrefWidth(applicationWidth);
         promptLabel.setAlignment(alignment);
         c.add(promptLabel);
 
         //Fail Text
         Label failText = new Label(failedMessage);
+        failText.setPrefWidth(applicationWidth);
         if (!failedMessage.equals("")) {
             failText.setTextFill(Color.RED);
             c.add(failText);
@@ -301,8 +314,10 @@ public class Main extends Application {
         HBox sFBox = new HBox(sFLabel, secondField);
         sFBox.setAlignment(alignment);
 
-        c.add(fBox);
-        c.add(sFBox);
+        HBox passwords = new HBox(fBox, sFBox);
+        passwords.getStyleClass().add("extraBox");
+
+        c.add(passwords);
 
         //Go button
         Button okBtn = guiFactory.createButton("Okay", textWidth, 12);
@@ -482,8 +497,8 @@ public class Main extends Application {
         Button regions = guiFactory.createButton("Regions");
         regions.setAlignment(alignment);
         regions.getStyleClass().add("barItems");
-        regions.setOnAction(ActionEvent ->{
-            if(!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
+        regions.setOnAction(ActionEvent -> {
+            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
                 selectRegions();
             }
         });
@@ -828,9 +843,10 @@ public class Main extends Application {
         double minWidth = 60;
 
         List<Node> toolButtons = new ArrayList<>();
-        Label allFilterLabel = new Label("View: ");
-        allFilterLabel.getStyleClass().add("toolbarLabel");
-        toolButtons.add(allFilterLabel);
+
+//        Label allFilterLabel = new Label("View: ");
+//        allFilterLabel.getStyleClass().add("toolbarLabel");
+//        toolButtons.add(allFilterLabel);
 
         summary = guiFactory.createButton("S", -1, -1);
         summary.setOnAction(ActionEvent -> {
@@ -1028,6 +1044,7 @@ public class Main extends Application {
 
     private void drawListView() {
         TableView<Service> tableView = new TableView<>();
+        tableView.setSelectionModel(new NullSelectionModel(tableView));
         tableView.setFocusTraversable(false);
         tableView.setPrefSize(applicationWidth, applicationHeight);
         Map<Service, AmazonAccount> accountService = new HashMap<>();
@@ -1040,7 +1057,7 @@ public class Main extends Application {
 
         //Service Type
         TableColumn<Service, String> serviceTypeCol = new TableColumn<>("Type");
-        serviceTypeCol.setPrefWidth(95);
+        serviceTypeCol.setMaxWidth(105);
         serviceTypeCol.setCellValueFactory(cellData -> {
             String serviceType = cellData.getValue().serviceType();
             return new SimpleStringProperty(serviceType);
@@ -1049,7 +1066,7 @@ public class Main extends Application {
 
         //Service Account
         TableColumn<Service, String> serviceAccountCol = new TableColumn<>("Account");
-        serviceAccountCol.setPrefWidth(200);
+        serviceAccountCol.setMaxWidth(250);
         serviceAccountCol.setCellValueFactory(cellData -> {
             AmazonAccount thisAccount = accountService.get(cellData.getValue());
             String serviceAccountName = "";
@@ -1063,7 +1080,6 @@ public class Main extends Application {
 
         //Service Name
         TableColumn<Service, String> serviceNameCol = new TableColumn<>("Name");
-        serviceNameCol.setPrefWidth(200);
         serviceNameCol.setCellValueFactory(cellData -> {
             String serviceName = cellData.getValue().serviceName();
             return new SimpleStringProperty(serviceName);
@@ -1072,7 +1088,7 @@ public class Main extends Application {
 
         //Service Size
         TableColumn<Service, String> serviceSizeCol = new TableColumn<>("Size");
-        serviceSizeCol.setPrefWidth(120);
+        serviceSizeCol.setMaxWidth(250);
         serviceSizeCol.setCellValueFactory(cellData -> {
             String serviceSize = cellData.getValue().serviceSize();
             return new SimpleStringProperty(serviceSize);
@@ -1081,7 +1097,7 @@ public class Main extends Application {
 
         //Service Price
         TableColumn<Service, Double> serviceCostCol = new TableColumn<>("Cost $/hr");
-        serviceCostCol.setPrefWidth(100);
+        serviceCostCol.setPrefWidth(200);
         serviceCostCol.setCellValueFactory(cellData -> {
             Double cost = cellData.getValue().servicePrice();
             cost = round(cost, 2);
@@ -1091,12 +1107,65 @@ public class Main extends Application {
 
         //Service State
         TableColumn<Service, String> serviceStateCol = new TableColumn<>("State");
-        serviceStateCol.setPrefWidth(100);
-        serviceStateCol.setCellValueFactory(cellData ->{
+        serviceStateCol.setMaxWidth(200);
+        serviceStateCol.setCellValueFactory(cellData -> {
             String serviceState = cellData.getValue().serviceState();
+            serviceState = serviceState.toLowerCase();
             return new SimpleStringProperty(serviceState);
         });
+        serviceStateCol.setCellFactory(column -> {
+            return new TableCell<Service, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setStyle("");
+
+                    if (item == null || empty) {
+                        setText(null);
+                    } else {
+                        setText(item.toLowerCase());
+
+                        if (Service.runningTitles().contains(item.toLowerCase())) {
+                            setTextFill(Color.GREEN);
+                        } else if (item.equalsIgnoreCase("stopped")) {
+                            setTextFill(Color.RED);
+                        } else {
+                            setTextFill(Color.ORANGERED);
+                        }
+                    }
+                }
+            };
+        });
         tableView.getColumns().add(serviceStateCol);
+
+        //Service Tags
+        TableColumn<Service, String> serviceTagsCol = new TableColumn<>("Tags");
+        serviceTagsCol.setPrefWidth(520);
+        serviceTagsCol.setCellValueFactory(cellData -> {
+            StringBuilder sb = new StringBuilder();
+            for (Map.Entry<String, String> tag : cellData.getValue().getTags().entrySet()) {
+                sb.append(String.format("%s:%s, ", tag.getKey(), tag.getValue()));
+            }
+            return new SimpleStringProperty(sb.toString());
+        });
+        serviceTagsCol.setCellFactory(cell -> {
+            return new TableCell<Service, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setStyle("-fx-alignment: CENTER-LEFT;");
+
+
+                    if (item == null || empty) {
+                        setText(null);
+                    } else {
+                        setText(item);
+                    }
+                }
+            };
+
+        });
+        tableView.getColumns().add(serviceTagsCol);
 
         tableView.getStylesheets().add(styleSheet);
         VBox outer = new VBox(tableView);
