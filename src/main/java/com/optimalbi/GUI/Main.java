@@ -43,6 +43,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.chart.CategoryAxis;
@@ -275,21 +276,33 @@ public class Main extends Application {
         Pos alignment = Pos.BASELINE_LEFT;
 
         //Info Text
-        Text infoText = new Text("TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest \n" +
-                "TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest \n" +
-                "TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest \n" +
-                "TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest TestTestTest ");
+        Text infoText = new Text("Hello!\n" +
+                "We noticed that you haven't used OptimalSpyglass before (or you are just setting it up again).\n \n" +
+                "Please take note of a few things:\n" +
+                "   OptimalSpyglass takes security seriously, we encypt your secret key(s) with the password provided.\n" +
+                "   Pricing is based on the information found in the pricing folder, feel free to edit and update this to reflect your costs.\n" +
+                "   While OptimalSpyglass doesnt show everything that can run in your AWS account it can show you the big things!\n \n" +
+                "Thanks for using Optimal Spyglass. Any questions please visit www.github.com/OptimalBI/optimal-spyglass-open-source (or click here).\n" +
+                "   ");
+        infoText.setOnMouseClicked(mouseValue -> {
+            try {
+                openWebpage(new URI("https://github.com/OptimalBI/optimal-spyglass-open-source"));
+            } catch (URISyntaxException e) {
+                logger.error("Error opening webpage: " + e.getMessage());
+            }
+        });
+        infoText.setCursor(Cursor.HAND);
         c.add(infoText);
 
         //Prompt Text
         Label promptLabel = new Label("Please enter the password you want use for this application");
         promptLabel.setPrefWidth(applicationWidth);
-        promptLabel.setAlignment(alignment);
-        c.add(promptLabel);
+        promptLabel.setAlignment(Pos.CENTER);
 
         //Fail Text
         Label failText = new Label(failedMessage);
         failText.setPrefWidth(applicationWidth);
+        failText.setAlignment(Pos.CENTER);
         if (!failedMessage.equals("")) {
             failText.setTextFill(Color.RED);
             c.add(failText);
@@ -315,18 +328,17 @@ public class Main extends Application {
         sFBox.setAlignment(alignment);
 
         HBox passwords = new HBox(fBox, sFBox);
+        passwords.setAlignment(Pos.CENTER);
         passwords.getStyleClass().add("extraBox");
 
-        c.add(passwords);
 
         //Go button
         Button okBtn = guiFactory.createButton("Okay", textWidth, 12);
         HBox btnBox = new HBox(okBtn);
-        btnBox.setMinWidth(applicationWidth / 3.2);
-        btnBox.setAlignment(alignment);
-
-        c.add(btnBox);
-
+        logger.info("Buttons thing: " + (boxWidth + textWidth)*2);
+        btnBox.setPrefWidth(675);
+        btnBox.setMaxWidth(675);
+        btnBox.setAlignment(Pos.BASELINE_RIGHT);
 
         EventHandler<ActionEvent> go = event -> {
             if (field.getText().length() > 1) {
@@ -349,8 +361,13 @@ public class Main extends Application {
         secondField.setOnAction(go);
         okBtn.setOnAction(go);
 
+        VBox passwordsBox = new VBox(promptLabel,passwords,btnBox);
+        passwordsBox.setPrefWidth(applicationWidth);
+        passwordsBox.setAlignment(Pos.CENTER);
+
         VBox layout = new VBox();
         layout.getChildren().addAll(c);
+        layout.getChildren().add(passwordsBox);
         layout.getStyleClass().add("settings");
         layout.getStylesheets().add(styleSheet);
         layout.setMaxWidth(textWidth + boxWidth);
@@ -771,6 +788,12 @@ public class Main extends Application {
                 } catch (URISyntaxException e) {
                     e.printStackTrace();
                 }
+            });
+            versionNotification.setOnMouseEntered(event -> {
+                versionNotification.setCursor(Cursor.HAND);
+            });
+            versionNotification.setOnMouseExited(event -> {
+                versionNotification.setCursor(Cursor.DEFAULT);
             });
             if (newVersion) {
                 guiComponents.add(versionNotification);

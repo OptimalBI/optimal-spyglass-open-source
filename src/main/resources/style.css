@@ -207,7 +207,8 @@
 }
 
 .extraBox{
-    -fx-spacing: 4;
+    -fx-spacing: 5;
+    -fx-padding:4;
 }
 
 .popup {
