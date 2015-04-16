@@ -26,6 +26,7 @@ import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsResult;
 import com.optimalbi.AmazonAccount;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
 import com.optimalbi.Controller.Containers.AmazonRegion;
+import com.optimalbi.GUI.TjfxFactory.NullFocusModel;
 import com.optimalbi.GUI.TjfxFactory.NullSelectionModel;
 import com.optimalbi.GUI.TjfxFactory.PictureButton;
 import com.optimalbi.GUI.TjfxFactory.TjfxFactory;
@@ -98,13 +99,14 @@ public class Main extends Application {
     private static double applicationWidth;
     private static Stage mainStage;
     //Gui Components
-    private final double buttonWidth = 210;
-    private final double buttonHeight = 25;
+    private final double buttonWidth = 160;
+    private final double buttonHeight = 30;
     private final String styleSheet = "style.css";
     private final BorderPane border = new BorderPane();
     private final File credentialsFile = new File("credentials");
     private final File settingsFile = new File("settings.cfg");
     private final File pricingDir = new File("pricing\\");
+    private Button curButton = null;
     private Map<Region, ServicePricing> pricings;
     //Bounds of the application
     private Rectangle2D primaryScreenBounds;
@@ -130,8 +132,8 @@ public class Main extends Application {
     @SuppressWarnings("FieldCanBeLocal")
     private String viewedRegion = "all";
     private Button summary;
+    private Button all;
     private guiModes guimode = guiModes.SUMMARY;
-
 
     private enum guiModes {
         LIST,
@@ -335,7 +337,7 @@ public class Main extends Application {
         //Go button
         Button okBtn = guiFactory.createButton("Okay", textWidth, 12);
         HBox btnBox = new HBox(okBtn);
-        logger.info("Buttons thing: " + (boxWidth + textWidth)*2);
+        logger.info("Buttons thing: " + (boxWidth + textWidth) * 2);
         btnBox.setPrefWidth(675);
         btnBox.setMaxWidth(675);
         btnBox.setAlignment(Pos.BASELINE_RIGHT);
@@ -361,7 +363,7 @@ public class Main extends Application {
         secondField.setOnAction(go);
         okBtn.setOnAction(go);
 
-        VBox passwordsBox = new VBox(promptLabel,passwords,btnBox);
+        VBox passwordsBox = new VBox(promptLabel, passwords, btnBox);
         passwordsBox.setPrefWidth(applicationWidth);
         passwordsBox.setAlignment(Pos.CENTER);
 
@@ -504,73 +506,6 @@ public class Main extends Application {
     private void addShutdownHook() {
         //Fixes a bug with the windows crashing on exit when using the OS close button
         mainStage.setOnCloseRequest(event -> System.exit(0));
-    }
-
-    private HBox createButtonMenu() {
-        List<Node> guiComponents = new ArrayList<>();
-        HBox buttons = new HBox();
-        Pos alignment = Pos.CENTER;
-        //Regions Button
-        Button regions = guiFactory.createButton("Regions");
-        regions.setAlignment(alignment);
-        regions.getStyleClass().add("barItems");
-        regions.setOnAction(ActionEvent -> {
-            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
-                selectRegions();
-            }
-        });
-        guiComponents.add(regions);
-
-        //Update button - This button repolls the AWS API
-        Button update = guiFactory.createButton("Update");
-        update.setAlignment(alignment);
-        update.getStyleClass().add("barItems");
-        update.setOnAction(ActionEvent -> {
-            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
-                Platform.runLater(Main.this::createAccounts);
-            }
-        });
-
-        guiComponents.add(update);
-
-        //Manage credentials
-        Button manageCredentials = guiFactory.createButton("Add/Remove credentials");
-        manageCredentials.setAlignment(alignment);
-        manageCredentials.getStyleClass().add("barItems");
-        manageCredentials.setOnAction(event -> {
-            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
-                guimode = guiModes.SETTINGS;
-                updateCentrePainting();
-            }
-        });
-        guiComponents.add(manageCredentials);
-
-        //Change password
-        Button changePassword = guiFactory.createButton("Change password");
-        changePassword.setAlignment(alignment);
-        changePassword.getStyleClass().add("barItems");
-        changePassword.setOnAction(event -> {
-            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
-                guimode = guiModes.CHANGE_PASSWORD;
-                updateCentrePainting();
-            }
-        });
-        guiComponents.add(changePassword);
-
-        //Exit button
-        Button exit = guiFactory.createButton("Exit");
-        exit.setAlignment(alignment);
-        exit.getStyleClass().add("barItems");
-        exit.setOnAction(event -> System.exit(0));
-        exit.setFocusTraversable(false);
-        guiComponents.add(exit);
-
-        //Add all buttons to buttons box
-        buttons.getChildren().addAll(guiComponents);
-        buttons.setPrefWidth(applicationWidth);
-        buttons.getStyleClass().add("barStyle");
-
-        return buttons;
     }
 
     private void changePassword(String notification) {
@@ -747,6 +682,8 @@ public class Main extends Application {
         HBox topLayout = new HBox();
         HBox botLayout = new HBox();
 
+        double iconHeight = 25;
+
         //TOP SECTION
 
         //Add Logo
@@ -764,7 +701,7 @@ public class Main extends Application {
         if (versi == null) {
             versi = getLatestVersionNumber();
             logger.debug(String.format("Remote version: %d.%d.%d. Current version: %d.%d.%d.", versi.get(0), versi.get(1), versi.get(2), curVer[0], curVer[1], curVer[2]));
-            //Int varibles to clear my head
+            //Int variables to clear my head
             int curMaj = curVer[0];
             int curMin = curVer[1];
             int curPatch = curVer[2];
@@ -811,22 +748,185 @@ public class Main extends Application {
         topLayout.setPrefHeight(thisHeight);
 
         //Bottom section of toolbar
-        ToolBar topBar = updateToolbar();
+        ToolBar topBar = regionFilterToolbar();
 //        topBar.getStyleClass().add("toolbar");
         topBar.setPrefWidth(applicationWidth * 2);
 
         botLayout.getChildren().add(topBar);
 
         HBox buttonMenu = createButtonMenu();
-        buttonMenu.setPrefWidth(applicationWidth);
-        buttonMenu.setAlignment(Pos.CENTER);
+        buttonMenu.setAlignment(Pos.CENTER_LEFT);
+
+        ToolBar toolButtons = new ToolBar();
+        summary = guiFactory.createButton("", iconHeight+5, iconHeight+5);
+        ImageView summaryIcon = new ImageView("SummaryView.png");
+        summaryIcon.setPreserveRatio(true);
+        summaryIcon.setSmooth(false);
+        summaryIcon.setFitHeight(iconHeight);
+        summary.setGraphic(summaryIcon);
+        summary.setOnAction(ActionEvent -> {
+            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
+                guimode = guiModes.SUMMARY;
+                updateCentrePainting();
+            }
+        });
+        toolButtons.getItems().add(summary);
+
+        Button box = guiFactory.createButton("", iconHeight+5, iconHeight+5);
+        box.setOnAction(ActionEvent -> {
+            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
+                guimode = guiModes.BOXES;
+                updateCentrePainting();
+            }
+        });
+        ImageView boxIcon = new ImageView("CardView.png");
+        boxIcon.setPreserveRatio(true);
+        boxIcon.setSmooth(false);
+        boxIcon.setFitHeight(iconHeight);
+        box.setGraphic(boxIcon);
+        toolButtons.getItems().add(box);
+
+        Button list = guiFactory.createButton("", iconHeight+5, iconHeight+5);
+        list.setOnAction(ActionEvent -> {
+            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
+                guimode = guiModes.LIST;
+                updateCentrePainting();
+            }
+        });
+        ImageView listIcon = new ImageView("TableView.png");
+        listIcon.setPreserveRatio(true);
+        listIcon.setSmooth(false);
+        listIcon.setFitHeight(iconHeight);
+        list.setGraphic(listIcon);
+
+        toolButtons.getItems().add(list);
+        toolButtons.setMinWidth(iconHeight*3);
+        toolButtons.getStyleClass().add("toolbar");
+
+        HBox filterButtons = new HBox(toolButtons);
+        filterButtons.getStyleClass().add("toolbar");
+        filterButtons.setPrefWidth((applicationWidth));
+        filterButtons.setAlignment(Pos.CENTER_RIGHT);
+
+        HBox filterAndButtons = new HBox();
+        filterAndButtons.setPrefWidth(applicationWidth);
+        filterAndButtons.getChildren().addAll(buttonMenu, filterButtons);
 
         VBox outline = new VBox();
         outline.setPrefWidth(applicationWidth);
-        outline.getChildren().addAll(topLayout, botLayout);
-        outline.getChildren().add(buttonMenu);
+        outline.getChildren().add(topLayout);
+        outline.getChildren().addAll(filterAndButtons);
+        outline.getChildren().add(botLayout);
+
         outline.getStylesheets().add(styleSheet);
         return outline;
+    }
+
+    private ToolBar regionFilterToolbar() {
+        Map<String, String> regionNames = Service.regionNames();
+        double minWidth = 60;
+
+        List<Node> toolButtons = new ArrayList<>();
+        Label regionLabel = new Label("Region Filter: ");
+        regionLabel.getStyleClass().add("toolbarLabel");
+        toolButtons.add(regionLabel);
+
+        all = guiFactory.createButton("All","regionButton",35,25);
+        curButton = all;
+        all.getStyleClass().add("regionButtonActive");
+        all.setOnAction(event->{
+            viewedRegion = "all";
+            all.getStyleClass().add("regionButtonActive");
+            curButton.getStyleClass().remove("regionButtonActive");
+            curButton = all;
+            updateCentrePainting();
+        });
+        toolButtons.add(all);
+
+        for (Region region : currentRegions) {
+            Button adding;
+            if (regionNames.containsKey(region.getName())) {
+                adding = guiFactory.createButton(regionNames.get(region.getName()),"regionButton" ,-1, -1);
+            } else {
+                adding = guiFactory.createButton(region.getName(),"regionButton" ,-1, -1);
+            }
+            adding.setOnAction(ActionEvent -> {
+                if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD) || guimode.equals(guiModes.SUMMARY))) {
+                    viewedRegion = region.getName();
+                    curButton.getStyleClass().remove("regionButtonActive");
+                    adding.getStyleClass().add("regionButtonActive");
+                    curButton = adding;
+                    updateCentrePainting();
+                }
+            });
+            toolButtons.add(adding);
+        }
+
+        ToolBar toolBar = new ToolBar();
+        toolBar.getItems().addAll(toolButtons);
+        toolBar.getStylesheets().add(styleSheet);
+        toolBar.getStyleClass().add("botToolbar");
+        toolBar.setPrefWidth(primaryScreenBounds.getWidth());
+
+        return toolBar;
+    }
+
+    private HBox createButtonMenu() {
+        List<Node> guiComponents = new ArrayList<>();
+        HBox buttons = new HBox();
+        Pos alignment = Pos.CENTER;
+        //Regions Button
+        Button regions = guiFactory.createButton("Regions");
+        regions.setAlignment(alignment);
+        regions.getStyleClass().add("barItems");
+        regions.setOnAction(ActionEvent -> {
+            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
+                selectRegions();
+            }
+        });
+        guiComponents.add(regions);
+
+        //Update button - This button repolls the AWS API
+        Button update = guiFactory.createButton("Update");
+        update.setAlignment(alignment);
+        update.getStyleClass().add("barItems");
+        update.setOnAction(ActionEvent -> {
+            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
+                Platform.runLater(Main.this::createAccounts);
+            }
+        });
+
+        guiComponents.add(update);
+
+        //Manage credentials
+        Button manageCredentials = guiFactory.createButton("Credentials");
+        manageCredentials.setAlignment(alignment);
+        manageCredentials.getStyleClass().add("barItems");
+        manageCredentials.setOnAction(event -> {
+            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
+                guimode = guiModes.SETTINGS;
+                updateCentrePainting();
+            }
+        });
+        guiComponents.add(manageCredentials);
+
+        //Change password
+        Button changePassword = guiFactory.createButton("Change password");
+        changePassword.setAlignment(alignment);
+        changePassword.getStyleClass().add("barItems");
+        changePassword.setOnAction(event -> {
+            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
+                guimode = guiModes.CHANGE_PASSWORD;
+                updateCentrePainting();
+            }
+        });
+        guiComponents.add(changePassword);
+
+        //Add all buttons to buttons box
+        buttons.getChildren().addAll(guiComponents);
+        buttons.getStyleClass().add("barStyle");
+
+        return buttons;
     }
 
     private List<Integer> getLatestVersionNumber() {
@@ -861,78 +961,6 @@ public class Main extends Application {
         }
     }
 
-    private ToolBar updateToolbar() {
-        Map<String, String> regionNames = Service.regionNames();
-        double minWidth = 60;
-
-        List<Node> toolButtons = new ArrayList<>();
-
-//        Label allFilterLabel = new Label("View: ");
-//        allFilterLabel.getStyleClass().add("toolbarLabel");
-//        toolButtons.add(allFilterLabel);
-
-        summary = guiFactory.createButton("S", -1, -1);
-        summary.setOnAction(ActionEvent -> {
-            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
-                guimode = guiModes.SUMMARY;
-                updateCentrePainting();
-            }
-        });
-        summary.setMinWidth(40);
-        toolButtons.add(summary);
-
-        Button box = guiFactory.createButton("B", -1, -1);
-        box.setOnAction(ActionEvent -> {
-            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
-                guimode = guiModes.BOXES;
-                updateCentrePainting();
-            }
-        });
-        box.setMinWidth(40);
-        toolButtons.add(box);
-
-        Button list = guiFactory.createButton("L", -1, -1);
-        list.setOnAction(ActionEvent -> {
-            if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
-                guimode = guiModes.LIST;
-                updateCentrePainting();
-            }
-        });
-        list.setMinWidth(40);
-        toolButtons.add(list);
-
-        Separator separator = new Separator();
-        toolButtons.add(separator);
-
-        Label regionLabel = new Label("Region Filter: ");
-        regionLabel.getStyleClass().add("toolbarLabel");
-        toolButtons.add(regionLabel);
-
-        for (Region region : currentRegions) {
-            Button adding;
-            if (regionNames.containsKey(region.getName())) {
-                adding = guiFactory.createButton(regionNames.get(region.getName()), -1, -1);
-            } else {
-                adding = guiFactory.createButton(region.getName(), -1, -1);
-            }
-            adding.setOnAction(ActionEvent -> {
-                if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
-                    viewedRegion = region.getName();
-                    updateCentrePainting();
-                }
-            });
-            toolButtons.add(adding);
-        }
-
-        ToolBar toolBar = new ToolBar();
-        toolBar.getItems().addAll(toolButtons);
-        toolBar.getStylesheets().add(styleSheet);
-        toolBar.getStyleClass().add("toolbar");
-        toolBar.setPrefWidth(primaryScreenBounds.getWidth());
-
-        return toolBar;
-    }
-
     private void updateCentrePainting() {
         if (!redrawHook) {
             //The first time we draw, hook the redraw listener to the changes in the Main's size
@@ -958,6 +986,10 @@ public class Main extends Application {
                 askForCredentials();
                 break;
             case SUMMARY:
+                viewedRegion = "all";
+                curButton.getStyleClass().remove("regionButtonActive");
+                all.getStyleClass().add("regionButtonActive");
+                curButton = all;
                 drawSummary();
                 break;
             case BOXES:
@@ -1070,11 +1102,24 @@ public class Main extends Application {
         tableView.setSelectionModel(new NullSelectionModel(tableView));
         tableView.setFocusTraversable(false);
         tableView.setPrefSize(applicationWidth, applicationHeight);
+        tableView.focusedProperty().addListener((a, b, c) -> {
+            tableView.getSelectionModel().clearSelection();
+            all.requestFocus();
+            tableView.getFocusModel().focus(0);
+        });
+        tableView.setOnMouseClicked(mouseEvent->{
+            all.requestFocus();
+            tableView.getSelectionModel().clearSelection();
+        });
+        tableView.getProperties().put("selectOnFocusGain", false);
+        tableView.getProperties().put("selectFirstRowByDefault", false);
         Map<Service, AmazonAccount> accountService = new HashMap<>();
         for (AmazonAccount acc : accounts) {
             for (Service s : acc.getServices()) {
-                accountService.put(s, acc);
-                tableView.getItems().add(s);
+                if(s.serviceRegion().getName().equals(viewedRegion) || viewedRegion.equals("all")) {
+                    accountService.put(s, acc);
+                    tableView.getItems().add(s);
+                }
             }
         }
 
@@ -1105,6 +1150,9 @@ public class Main extends Application {
         TableColumn<Service, String> serviceNameCol = new TableColumn<>("Name");
         serviceNameCol.setCellValueFactory(cellData -> {
             String serviceName = cellData.getValue().serviceName();
+            if(serviceName.equals("")){
+                serviceName = cellData.getValue().serviceID();
+            }
             return new SimpleStringProperty(serviceName);
         });
         tableView.getColumns().add(serviceNameCol);

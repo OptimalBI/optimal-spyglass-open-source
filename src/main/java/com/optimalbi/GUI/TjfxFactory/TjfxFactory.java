@@ -52,10 +52,11 @@ public class TjfxFactory {
         this.googleSheet = googleSheet;
     }
 
-    Button createButton(String title, String styleClass) {
+    public Button createButton(String title, String styleClass) {
         Button button = new Button(title);
         if (buttonWidth != -1) {
-            button.setPrefSize(buttonWidth, buttonHeight);
+            button.setMinWidth(buttonWidth);
+            button.setPrefHeight(buttonHeight);
         }
         button.getStylesheets().add(styleSheet);
         if (!googleSheet.equals("")) button.getStylesheets().add(googleSheet);

@@ -46,6 +46,15 @@
     -fx-background-color:#faa61a;
 }
 
+.botToolbar, .botToolbar:selected{
+    -fx-font-family: "Droid Sans";
+    -fx-font-size: 30px;
+    -fx-text-fill: darkgrey;
+    -fx-spacing: 3;
+    -fx-padding: 5;
+    -fx-background-color: #EEE;
+}
+
 .menu-item, .context-menu{
     -fx-font-family: "Droid Sans";
     -fx-font-size: 30px;
@@ -157,7 +166,7 @@
     -fx-font-family: "Droid Sans";
     -fx-font-size: 14px;
     -fx-font-weight:bold;
-    -fx-text-fill: white;
+    -fx-text-fill: #3b3b3b;
     -fx-padding: 5;
 }
 
@@ -171,8 +180,32 @@
 
 }
 .button:hover {
-    -fx-background-color: B2B2B2;
-    -fx-text-fill: #faa61a;
+    -fx-background-color: #f07430;
+    -fx-text-fill: white;
+}
+
+.regionButton, regionButton:active{
+    -fx-font-family: "Droid Sans";
+    -fx-font-size: 14px;
+    -fx-background-color: #EEE;
+    -fx-text-fill: #3b3b3b;
+    -fx-background-radius: 4;
+    -fx-padding: 5;
+
+}
+.regionButton:hover {
+    -fx-background-color: #faa61a;
+    -fx-text-fill: white;
+}
+
+.regionButtonActive {
+    -fx-background-color: #faa61a;
+    -fx-text-fill: #FFFFFF;
+}
+
+.regionButtonActive:hover{
+    -fx-background-color: #faa61a;
+    -fx-text-fill: #FFFFFF;
 }
 
 .buttonDone{
@@ -392,12 +425,23 @@
     -fx-background-color: #faa61a;
 }
 
-.table-view {
+.table-view, table-view:selected {
     -fx-base: white;
     -fx-background-color: white;
     -fx-table-cell-border-color: transparent;
     -fx-table-header-border-color: transparent;
     -fx-padding: -2;
+}
+
+.table-view:focused {
+  -fx-background-color: transparent,-fx-box-border,-fx-control-inner-background;
+  -fx-background-insets: -1.4, 0, 1;
+  -fx-background-radius: 1.4, 0, 0;
+  -fx-padding: 1; /* 0.083333em; */
+}
+
+.table-row-cell:filled:focused:selected{
+    -fx-border-color: transparent;
 }
 
 .table-view .column-header-background {
@@ -447,17 +491,18 @@
 }
 
 .table-row-cell:selected {
-   -fx-background-color: transparent;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent transparent transparent;
 }
 .table-row-cell:selected .text {
-       -fx-fill: transparent;
+    -fx-fill: transparent;
 }
 
 .table-row-cell:filled:selected {
   -fx-background: -fx-control-inner-background ;
   -fx-background-color: -fx-table-cell-border-color, -fx-background ;
   -fx-background-insets: 0, 0 0 1 0 ;
-  -fx-table-cell-border-color: derive(-fx-color, 5%);
+  -fx-table-cell-border-color: transparent;
 }
 .table-row-cell:odd:filled:selected {
   -fx-background: -fx-control-inner-background-alt ;
