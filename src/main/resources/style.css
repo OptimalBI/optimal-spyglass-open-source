@@ -298,25 +298,31 @@
 .ec2Title{
     -fx-font-family: "Droid Sans";
     -fx-font-size: 26px;
-    -fx-text-fill: orange;
+    -fx-text-fill: #E98C47;
 }
 
 .redshiftTitle{
     -fx-font-family: "Droid Sans";
     -fx-font-size: 26px;
-    -fx-text-fill: red;
+    -fx-text-fill: #5C95CC;
+}
+
+.storageTitle{
+    -fx-font-family: "Droid Sans";
+    -fx-font-size: 26px;
+    -fx-text-fill: #D1624E;
 }
 
 .DBTitle{
     -fx-font-family: "Droid Sans";
     -fx-font-size: 26px;
-    -fx-text-fill: darkblue;
+    -fx-text-fill: #5C95CC;
 }
 
 .rdsTitle{
     -fx-font-family: "Droid Sans";
     -fx-font-size: 26px;
-    -fx-text-fill: darkblue;
+    -fx-text-fill: #5C95CC;
 }
 
 .testInstanceTitle{

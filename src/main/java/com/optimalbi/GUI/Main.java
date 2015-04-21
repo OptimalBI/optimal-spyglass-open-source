@@ -71,9 +71,7 @@ import org.jasypt.encryption.pbe.config.SimplePBEConfig;
 import org.jasypt.properties.PropertyValueEncryptionUtils;
 import org.jasypt.util.password.BasicPasswordEncryptor;
 import org.jasypt.util.password.PasswordEncryptor;
-import org.timothygray.SimpleLog.EmptyLogger;
-import org.timothygray.SimpleLog.FileLogger;
-import org.timothygray.SimpleLog.Logger;
+import com.optimalbi.SimpleLog.*;
 
 import java.awt.*;
 import java.io.*;
@@ -116,7 +114,7 @@ public class Main extends Application {
     private TjfxFactory guiFactory;
     private ProgressBar progressBar = null;
     private List<AmazonCredentials> credentials;
-    private ArrayList<AmazonAccount> accounts;
+    private List<AmazonAccount> accounts;
     private List<AmazonRegion> allRegions;
     private List<Region> currentRegions;
     private List<Integer> versi;
@@ -248,7 +246,7 @@ public class Main extends Application {
         mainStage.setTitle("OptimalSpyglass");
         mainStage.show();
 
-        logger.info("Hello chaps");
+        logger.info("\'ello chaps");
 
         summary.requestFocus();
 
@@ -1019,7 +1017,7 @@ public class Main extends Application {
      */
     private void drawServiceBoxes() {
 
-        BigDecimal iW = new BigDecimal((((mainStage.getWidth()) - 70) / ServiceDraw.serviceWidth));
+        BigDecimal iW = new BigDecimal((((mainStage.getWidth())) / ServiceDraw.serviceWidth));
         int instancesWide = iW.intValue();
 
         ServiceDraw draw = new ServiceDraw(styleSheet, guiFactory, mainStage);
@@ -1035,7 +1033,7 @@ public class Main extends Application {
 
             for (AmazonAccount account : accounts) {
                 if (account.getCredentials().getAccountName().equals(credential.getAccountName())) {
-                    List<Service> services = account.getServices();
+                    Set<Service> services = account.getServices();
                     ArrayList<HBox> rows = new ArrayList<>();
                     HBox currentRow = new HBox();
                     for (Service service : services) {
@@ -1058,7 +1056,7 @@ public class Main extends Application {
                             currentRow.getChildren().add(box);
                             i++;
                         } else {
-                            if (service.serviceRegion().getName().equals(viewedRegion)) {
+                            if (service.serviceRegion().getName().equals(viewedRegion) || service.serviceType().equalsIgnoreCase("s3")) {
                                 box.getStyleClass().add("instance");
                                 currentRow.getChildren().add(box);
                                 i++;
@@ -1116,7 +1114,7 @@ public class Main extends Application {
         Map<Service, AmazonAccount> accountService = new HashMap<>();
         for (AmazonAccount acc : accounts) {
             for (Service s : acc.getServices()) {
-                if(s.serviceRegion().getName().equals(viewedRegion) || viewedRegion.equals("all")) {
+                if(s.serviceRegion().getName().equals(viewedRegion) || viewedRegion.equals("all") || s.serviceType().equalsIgnoreCase("s3")) {
                     accountService.put(s, acc);
                     tableView.getItems().add(s);
                 }
@@ -1172,6 +1170,9 @@ public class Main extends Application {
         serviceCostCol.setCellValueFactory(cellData -> {
             Double cost = cellData.getValue().servicePrice();
             cost = round(cost, 2);
+            if(cost==0){
+                return new SimpleObjectProperty<>();
+            }
             return new SimpleObjectProperty<>(cost);
         });
         tableView.getColumns().add(serviceCostCol);
