@@ -184,30 +184,6 @@
     -fx-text-fill: white;
 }
 
-.regionButton, regionButton:active{
-    -fx-font-family: "Droid Sans";
-    -fx-font-size: 14px;
-    -fx-background-color: #EEE;
-    -fx-text-fill: #3b3b3b;
-    -fx-background-radius: 4;
-    -fx-padding: 5;
-
-}
-.regionButton:hover {
-    -fx-background-color: #faa61a;
-    -fx-text-fill: white;
-}
-
-.regionButtonActive {
-    -fx-background-color: #faa61a;
-    -fx-text-fill: #FFFFFF;
-}
-
-.regionButtonActive:hover{
-    -fx-background-color: #faa61a;
-    -fx-text-fill: #FFFFFF;
-}
-
 .buttonDone{
     -fx-background-color: #666666;
     -fx-text-fill: #ffb01b;
@@ -298,7 +274,7 @@
 .ec2Title{
     -fx-font-family: "Droid Sans";
     -fx-font-size: 26px;
-    -fx-text-fill: #E98C47;
+    -fx-text-fill: #F58536;
 }
 
 .redshiftTitle{
@@ -310,13 +286,13 @@
 .storageTitle{
     -fx-font-family: "Droid Sans";
     -fx-font-size: 26px;
-    -fx-text-fill: #D1624E;
+    -fx-text-fill: #BA4334;
 }
 
 .DBTitle{
     -fx-font-family: "Droid Sans";
     -fx-font-size: 26px;
-    -fx-text-fill: #5C95CC;
+    -fx-text-fill: #2D72B8;
 }
 
 .rdsTitle{
@@ -408,6 +384,14 @@
     -fx-background-radius: 3;
 }
 
+.hyperlink{
+    -fx-font-family: "Droid Sans";
+    -fx-underline: true;
+    -fx-font-size: 16px;
+    -fx-padding: 0;
+    -fx-spacing: 0;
+}
+
 .tagTitle{
     -fx-font-family: "Open Sans";
     -fx-font-size: 14px;
@@ -429,6 +413,31 @@
     -fx-padding: 0;
     -fx-spacing: 0;
     -fx-background-color: #faa61a;
+}
+
+.regionButton, .regionButton:active{
+    -fx-font-family: "Droid Sans";
+    -fx-font-size: 14px;
+    -fx-background-color: #EEE;
+    -fx-text-fill: #3b3b3b;
+    -fx-background-radius: 4;
+    -fx-padding: 5;
+    -fx-spacing: 0;
+}
+
+.regionButton:hover {
+    -fx-background-color: #faa61a;
+    -fx-text-fill: white;
+}
+
+.regionButtonActive {
+    -fx-background-color: #faa61a;
+    -fx-text-fill: #FFFFFF;
+}
+
+.regionButtonActive:hover{
+    -fx-background-color: #faa61a;
+    -fx-text-fill: #FFFFFF;
 }
 
 .table-view, table-view:selected {

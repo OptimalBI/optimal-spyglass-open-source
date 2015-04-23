@@ -1,21 +1,26 @@
 package com.optimalbi.GUI;
 
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.optimalbi.AmazonAccount;
 import com.optimalbi.GUI.TjfxFactory.GuiButton;
 import com.optimalbi.GUI.TjfxFactory.PictureButton;
 import com.optimalbi.GUI.TjfxFactory.TjfxFactory;
 import com.optimalbi.Services.LocalDynamoDBService;
+import com.optimalbi.Services.LocalS3Service;
 import com.optimalbi.Services.Service;
+import javafx.application.Platform;
+import javafx.concurrent.Task;
+import javafx.event.EventHandler;
 import javafx.geometry.Pos;
-import javafx.scene.Group;
-import javafx.scene.Node;
-import javafx.scene.Scene;
+import javafx.scene.*;
+import javafx.scene.Cursor;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.effect.Bloom;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.effect.Shadow;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -23,8 +28,10 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
+import org.apache.commons.lang.Validate;
 
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -38,6 +45,8 @@ public class ServiceDraw {
     public static int serviceHeight = 220;
     public static int labelWidth = serviceWidth / 2;
     public static final int textWidth = serviceWidth - labelWidth;
+    private static Queue<s3QueueObject> toCalculate;
+    private boolean calculating;
     private final String stylesheet;
     private final TjfxFactory guiFactory;
     private final Stage mainStage;
@@ -46,20 +55,22 @@ public class ServiceDraw {
         this.stylesheet = stylesheet;
         this.guiFactory = guiFactory;
         this.mainStage = mainStage;
+        calculating = false;
+        this.toCalculate = new LinkedList<>();
     }
 
     public VBox drawOne(Service service, GuiButton... buttons) {
         VBox drawing = null;
         if (service.serviceType().equalsIgnoreCase("ec2")) {
-            drawing =  drawEc2(service, buttons);
+            drawing = drawEc2(service, buttons);
         } else if (service.serviceType().equalsIgnoreCase("rds")) {
             drawing = drawRDS(service);
         } else if (service.serviceType().equalsIgnoreCase("redshift")) {
             drawing = drawRedshift(service, buttons);
-        } else if (service.serviceType().equalsIgnoreCase("dynamodb")){
-            drawing = drawDynamoDB(service,buttons);
-        } else if(service.serviceType().equalsIgnoreCase("s3")){
-            drawing = drawS3(service,buttons);
+        } else if (service.serviceType().equalsIgnoreCase("dynamodb")) {
+            drawing = drawDynamoDB(service, buttons);
+        } else if (service.serviceType().equalsIgnoreCase("s3")) {
+            drawing = drawS3(service, buttons);
         } else {
             drawing = drawGeneric(service);
         }
@@ -168,7 +179,7 @@ public class ServiceDraw {
 
         //Instance Name
         Label instanceName = new Label(service.serviceName());
-        if(service.serviceName().equals("")){
+        if (service.serviceName().equals("")) {
             instanceName = new Label(service.serviceID());
         }
         instanceName.setPrefWidth(serviceWidth);
@@ -236,7 +247,7 @@ public class ServiceDraw {
         c.add(instanceState);
 
 
-        List<GuiButton> guiButtons = addEc2Buttons(service,buttons);
+        List<GuiButton> guiButtons = addEc2Buttons(service, buttons);
 
         GuiButton[] finalButtons = new GuiButton[guiButtons.size()];
         finalButtons = guiButtons.toArray(finalButtons);
@@ -253,7 +264,7 @@ public class ServiceDraw {
         return drawing;
     }
 
-    private List<GuiButton> addEc2Buttons(Service service, GuiButton... currentButtons){
+    private List<GuiButton> addEc2Buttons(Service service, GuiButton... currentButtons) {
         List<GuiButton> buttons = new ArrayList<>();
         Collections.addAll(buttons, currentButtons);
 
@@ -262,12 +273,12 @@ public class ServiceDraw {
             double textWidth = 100;
             double labelWidth = 100;
 
-            Map<String,String> tags = service.getTags();
+            Map<String, String> tags = service.getTags();
             List<Node> guiComponents = new LinkedList<>();
 
             //Get the width for all the text
-            for(String name: tags.keySet()){
-                Text textNode = new Text(name+": ");
+            for (String name : tags.keySet()) {
+                Text textNode = new Text(name + ": ");
 
                 Scene tempScene = new Scene(new Group(textNode));
                 tempScene.getStylesheets().add(stylesheet);
@@ -275,26 +286,26 @@ public class ServiceDraw {
                 textNode.applyCss();
 
                 double tempWidth = textNode.getLayoutBounds().getWidth();
-                if(tempWidth>textWidth){
+                if (tempWidth > textWidth) {
                     textWidth = tempWidth;
                 }
             }
 
-            for(String name: tags.values()){
-                Text textNode = new Text(name+": ");
+            for (String name : tags.values()) {
+                Text textNode = new Text(name + ": ");
 
                 Scene tempScene = new Scene(new Group(textNode));
                 tempScene.getStylesheets().add(stylesheet);
                 textNode.getStyleClass().add("tagValue");
                 textNode.applyCss();
 
-                double tempWidth = textNode.getLayoutBounds().getWidth()+40;
-                if(tempWidth>labelWidth){
+                double tempWidth = textNode.getLayoutBounds().getWidth() + 40;
+                if (tempWidth > labelWidth) {
                     labelWidth = tempWidth;
                 }
             }
 
-            DropShadow shadow = new DropShadow(1.8,Color.LIGHTGREY);
+            DropShadow shadow = new DropShadow(1.8, Color.LIGHTGREY);
             shadow.setOffsetY(1);
 
             Text title = new Text(service.serviceName() + "'s tags");
@@ -304,8 +315,8 @@ public class ServiceDraw {
             title.setEffect(shadow);
             guiComponents.add(title);
 
-            for(Map.Entry<String,String> tag : tags.entrySet()){
-                Text textNode = new Text(tag.getKey()+": ");
+            for (Map.Entry<String, String> tag : tags.entrySet()) {
+                Text textNode = new Text(tag.getKey() + ": ");
                 textNode.setFill(Color.BLACK);
                 textNode.getStyleClass().add("tagTitle");
                 textNode.setTextAlignment(TextAlignment.RIGHT);
@@ -325,6 +336,15 @@ public class ServiceDraw {
                 box.getStyleClass().add("tagTitle");
                 guiComponents.add(box);
             }
+
+            //If not tags message
+            if(tags.size()==0){
+                Label noTags = new Label("No tags found");
+                noTags.setAlignment(Pos.CENTER);
+                noTags.setStyle("-fx-font-size: 16px;");
+                guiComponents.add(noTags);
+            }
+
             //Close button
             Popup tagWindow = new Popup();
 
@@ -335,16 +355,16 @@ public class ServiceDraw {
             guiComponents.add(close);
 
             VBox vBox = new VBox();
-            vBox.setAlignment(Pos.CENTER_RIGHT);
+            vBox.setAlignment(Pos.CENTER);
             vBox.getStylesheets().add(stylesheet);
             vBox.getStyleClass().add("tagBox");
-            vBox.setPrefWidth(textWidth+labelWidth+5);
+            vBox.setPrefWidth(textWidth + labelWidth + 5);
             vBox.getChildren().addAll(guiComponents);
             tagWindow.getContent().add(vBox);
             tagWindow.show(mainStage);
             tagWindow.setAutoHide(true);
         };
-        GuiButton tag = new PictureButton("T",tagCommand,null);
+        GuiButton tag = new PictureButton("T", tagCommand, null);
         buttons.add(tag);
 
         return buttons;
@@ -378,7 +398,7 @@ public class ServiceDraw {
 
         //Instance Name
         Label instanceName = new Label(service.serviceName());
-        if(service.serviceName().equals("")){
+        if (service.serviceName().equals("")) {
             instanceName = new Label(service.serviceID());
         }
         instanceName.setPrefWidth(serviceWidth);
@@ -463,7 +483,7 @@ public class ServiceDraw {
         return drawing;
     }
 
-    private List<GuiButton> addRDSButtons(Service service, GuiButton... currentButtons){
+    private List<GuiButton> addRDSButtons(Service service, GuiButton... currentButtons) {
         List<GuiButton> buttons = new ArrayList<>();
         Collections.addAll(buttons, currentButtons);
 
@@ -511,7 +531,7 @@ public class ServiceDraw {
 
         //Instance Name
         Label instanceName = new Label(service.serviceName());
-        if(service.serviceName().equals("")){
+        if (service.serviceName().equals("")) {
             instanceName = new Label(service.serviceID());
         }
         instanceName.setPrefWidth(serviceWidth);
@@ -596,7 +616,7 @@ public class ServiceDraw {
         return drawing;
     }
 
-    private List<GuiButton> addRedshiftButtons(Service service, GuiButton... currentButtons){
+    private List<GuiButton> addRedshiftButtons(Service service, GuiButton... currentButtons) {
         List<GuiButton> buttons = new ArrayList<>();
         Collections.addAll(buttons, currentButtons);
 
@@ -605,12 +625,12 @@ public class ServiceDraw {
             double textWidth = 100;
             double labelWidth = 100;
 
-            Map<String,String> tags = service.getTags();
+            Map<String, String> tags = service.getTags();
             List<Node> guiComponents = new LinkedList<>();
 
             //Get the width for all the text
-            for(String name: tags.keySet()){
-                Text textNode = new Text(name+": ");
+            for (String name : tags.keySet()) {
+                Text textNode = new Text(name + ": ");
 
                 Scene tempScene = new Scene(new Group(textNode));
                 tempScene.getStylesheets().add(stylesheet);
@@ -618,26 +638,26 @@ public class ServiceDraw {
                 textNode.applyCss();
 
                 double tempWidth = textNode.getLayoutBounds().getWidth();
-                if(tempWidth>textWidth){
+                if (tempWidth > textWidth) {
                     textWidth = tempWidth;
                 }
             }
 
-            for(String name: tags.values()){
-                Text textNode = new Text(name+": ");
+            for (String name : tags.values()) {
+                Text textNode = new Text(name + ": ");
 
                 Scene tempScene = new Scene(new Group(textNode));
                 tempScene.getStylesheets().add(stylesheet);
                 textNode.getStyleClass().add("tagValue");
                 textNode.applyCss();
 
-                double tempWidth = textNode.getLayoutBounds().getWidth()+40;
-                if(tempWidth>labelWidth){
+                double tempWidth = textNode.getLayoutBounds().getWidth() + 40;
+                if (tempWidth > labelWidth) {
                     labelWidth = tempWidth;
                 }
             }
 
-            DropShadow shadow = new DropShadow(1.8,Color.LIGHTGREY);
+            DropShadow shadow = new DropShadow(1.8, Color.LIGHTGREY);
             shadow.setOffsetY(1);
 
             Text title = new Text(service.serviceName() + "'s tags");
@@ -647,8 +667,8 @@ public class ServiceDraw {
             title.setEffect(shadow);
             guiComponents.add(title);
 
-            for(Map.Entry<String,String> tag : tags.entrySet()){
-                Text textNode = new Text(tag.getKey()+": ");
+            for (Map.Entry<String, String> tag : tags.entrySet()) {
+                Text textNode = new Text(tag.getKey() + ": ");
                 textNode.setFill(Color.BLACK);
                 textNode.getStyleClass().add("tagTitle");
                 textNode.setTextAlignment(TextAlignment.RIGHT);
@@ -668,6 +688,15 @@ public class ServiceDraw {
                 box.getStyleClass().add("tagTitle");
                 guiComponents.add(box);
             }
+
+            //If not tags message
+            if(tags.size()==0){
+                Label noTags = new Label("No tags found");
+                noTags.setAlignment(Pos.CENTER);
+                noTags.setStyle("-fx-font-size: 16px;");
+                guiComponents.add(noTags);
+            }
+
             //Close button
             Popup tagWindow = new Popup();
 
@@ -678,16 +707,16 @@ public class ServiceDraw {
             guiComponents.add(close);
 
             VBox vBox = new VBox();
-            vBox.setAlignment(Pos.CENTER_RIGHT);
+            vBox.setAlignment(Pos.CENTER);
             vBox.getStylesheets().add(stylesheet);
             vBox.getStyleClass().add("tagBox");
-            vBox.setPrefWidth(textWidth+labelWidth+5);
+            vBox.setPrefWidth(textWidth + labelWidth + 5);
             vBox.getChildren().addAll(guiComponents);
             tagWindow.getContent().add(vBox);
             tagWindow.show(mainStage);
             tagWindow.setAutoHide(true);
         };
-        GuiButton tag = new PictureButton("T",tagCommand,null);
+        GuiButton tag = new PictureButton("T", tagCommand, null);
         buttons.add(tag);
 
         return buttons;
@@ -721,7 +750,7 @@ public class ServiceDraw {
 
         //Instance Name
         Label instanceName = new Label(service.serviceName());
-        if(service.serviceName().equals("")){
+        if (service.serviceName().equals("")) {
             instanceName = new Label(service.serviceID());
         }
         instanceName.setPrefWidth(serviceWidth);
@@ -739,7 +768,6 @@ public class ServiceDraw {
         instanceSize.setPrefWidth(labelWidth);
 
 
-
         HBox sizeBox = new HBox(instanceSizeLabel, instanceSize);
         sizeBox.setPrefWidth(serviceWidth);
         sizeBox.setAlignment(align);
@@ -751,7 +779,7 @@ public class ServiceDraw {
         instanceRateLabel.setAlignment(Pos.TOP_RIGHT);
         instanceRateLabel.getStyleClass().add("guiLabel");
         instanceRateLabel.setMinHeight(rateHeight);
-        LocalDynamoDBService thisDDB = (LocalDynamoDBService)service;
+        LocalDynamoDBService thisDDB = (LocalDynamoDBService) service;
         Label instanceRate = new Label(thisDDB.serviceRate());
         instanceRate.setAlignment(Pos.TOP_LEFT);
         instanceRate.setMinHeight(rateHeight);
@@ -795,13 +823,20 @@ public class ServiceDraw {
         return drawing;
     }
 
-    private List<GuiButton> addDynamoDBButtons(Service service, GuiButton... currentButtons){
+    private List<GuiButton> addDynamoDBButtons(Service service, GuiButton... currentButtons) {
         List<GuiButton> buttons = new ArrayList<>();
         Collections.addAll(buttons, currentButtons);
         return buttons;
     }
 
-    private VBox drawS3(Service service, GuiButton... buttons){
+    private VBox drawS3(Service service, GuiButton... buttons) {
+        boolean alreadyCalc = false;
+        if(!service.serviceSize().equalsIgnoreCase("")){
+            alreadyCalc = true;
+        }
+
+        LocalS3Service s3 = (LocalS3Service) service;
+
         Pos align = Pos.CENTER;
 
         List<Node> c = new ArrayList<>();
@@ -823,7 +858,7 @@ public class ServiceDraw {
 
         //Instance Name
         Label instanceName = new Label(service.serviceName());
-        if(service.serviceName().equals("")){
+        if (service.serviceName().equals("")) {
             instanceName = new Label(service.serviceID());
         }
         instanceName.setPrefWidth(serviceWidth);
@@ -837,8 +872,16 @@ public class ServiceDraw {
         instanceSizeLabel.setPrefWidth(labelWidth);
         instanceSizeLabel.setAlignment(Pos.CENTER_RIGHT);
         instanceSizeLabel.getStyleClass().add("guiLabel");
-        Label instanceSize = new Label(service.serviceSize());
+        Label instanceSize = new Label("Calculate");
+        if(alreadyCalc){
+            instanceSize.setText(s3.serviceSize());
+        } else {
+            instanceSize.getStyleClass().add("hyperlink");
+            instanceSize.setCursor(Cursor.HAND);
+        }
         instanceSize.setPrefWidth(labelWidth);
+
+
 
         HBox sizeBox = new HBox(instanceSizeLabel, instanceSize);
         sizeBox.setPrefWidth(serviceWidth);
@@ -850,8 +893,15 @@ public class ServiceDraw {
         instanceObjectCount.setPrefWidth(labelWidth);
         instanceObjectCount.setAlignment(Pos.CENTER_RIGHT);
         instanceObjectCount.getStyleClass().add("guiLabel");
-        Label instanceObjects = new Label("");
+        Label instanceObjects = new Label("Calculate");
+        if(alreadyCalc){
+            instanceObjects.setText(s3.getNumberOfObjects()+"");
+        } else {
+            instanceObjects.getStyleClass().add("hyperlink");
+            instanceObjects.setCursor(Cursor.HAND);
+        }
         instanceObjects.setPrefWidth(labelWidth);
+
 
         HBox objectCountBox = new HBox(instanceObjectCount, instanceObjects);
         objectCountBox.setPrefWidth(serviceWidth);
@@ -872,6 +922,24 @@ public class ServiceDraw {
         }
         c.add(instanceState);
 
+        EventHandler<MouseEvent> calc = event -> {
+            instanceObjects.setText("Calculating");
+            instanceObjects.setTextFill(Color.MEDIUMPURPLE);
+            instanceSize.setText("Calculating");
+            instanceSize.setTextFill(Color.MEDIUMPURPLE);
+            Task<Void> calcTask = new Task<Void>() {
+                @Override
+                protected Void call() throws Exception {
+                    s3Calculate(service, instanceObjects, instanceSize);
+                    return null;
+                }
+            };
+            Thread thr = new Thread(calcTask);
+            thr.start();
+        };
+        instanceObjects.setOnMouseClicked(calc);
+        instanceSize.setOnMouseClicked(calc);
+
         List<GuiButton> guiButtons = addS3Buttons(service, buttons);
 
         GuiButton[] finalButtons = new GuiButton[guiButtons.size()];
@@ -888,10 +956,15 @@ public class ServiceDraw {
         drawing.setMinWidth(serviceWidth);
         drawing.getStylesheets().add(stylesheet);
         drawing.getStyleClass().add("instance");
+
+        if(!alreadyCalc) {
+            queueS3Calculate(service, instanceObjects, instanceSize);
+        }
+
         return drawing;
     }
 
-    private List<GuiButton> addS3Buttons(Service service, GuiButton... currentButtons){
+    private List<GuiButton> addS3Buttons(Service service, GuiButton... currentButtons) {
         List<GuiButton> buttons = new ArrayList<>();
         Collections.addAll(buttons, currentButtons);
 
@@ -900,12 +973,12 @@ public class ServiceDraw {
             double textWidth = 100;
             double labelWidth = 100;
 
-            Map<String,String> tags = service.getTags();
+            Map<String, String> tags = service.getTags();
             List<Node> guiComponents = new LinkedList<>();
 
             //Get the width for all the text
-            for(String name: tags.keySet()){
-                Text textNode = new Text(name+": ");
+            for (String name : tags.keySet()) {
+                Text textNode = new Text(name + ": ");
 
                 Scene tempScene = new Scene(new Group(textNode));
                 tempScene.getStylesheets().add(stylesheet);
@@ -913,26 +986,26 @@ public class ServiceDraw {
                 textNode.applyCss();
 
                 double tempWidth = textNode.getLayoutBounds().getWidth();
-                if(tempWidth>textWidth){
+                if (tempWidth > textWidth) {
                     textWidth = tempWidth;
                 }
             }
 
-            for(String name: tags.values()){
-                Text textNode = new Text(name+": ");
+            for (String name : tags.values()) {
+                Text textNode = new Text(name + ": ");
 
                 Scene tempScene = new Scene(new Group(textNode));
                 tempScene.getStylesheets().add(stylesheet);
                 textNode.getStyleClass().add("tagValue");
                 textNode.applyCss();
 
-                double tempWidth = textNode.getLayoutBounds().getWidth()+40;
-                if(tempWidth>labelWidth){
+                double tempWidth = textNode.getLayoutBounds().getWidth() + 40;
+                if (tempWidth > labelWidth) {
                     labelWidth = tempWidth;
                 }
             }
 
-            DropShadow shadow = new DropShadow(1.8,Color.LIGHTGREY);
+            DropShadow shadow = new DropShadow(1.8, Color.LIGHTGREY);
             shadow.setOffsetY(1);
 
             Text title = new Text(service.serviceName() + "'s tags");
@@ -942,8 +1015,8 @@ public class ServiceDraw {
             title.setEffect(shadow);
             guiComponents.add(title);
 
-            for(Map.Entry<String,String> tag : tags.entrySet()){
-                Text textNode = new Text(tag.getKey()+": ");
+            for (Map.Entry<String, String> tag : tags.entrySet()) {
+                Text textNode = new Text(tag.getKey() + ": ");
                 textNode.setFill(Color.BLACK);
                 textNode.getStyleClass().add("tagTitle");
                 textNode.setTextAlignment(TextAlignment.RIGHT);
@@ -963,6 +1036,15 @@ public class ServiceDraw {
                 box.getStyleClass().add("tagTitle");
                 guiComponents.add(box);
             }
+
+            //If not tags message
+            if(tags.size()==0){
+                Label noTags = new Label("No tags found");
+                noTags.setAlignment(Pos.CENTER);
+                noTags.setStyle("-fx-font-size: 16px;");
+                guiComponents.add(noTags);
+            }
+
             //Close button
             Popup tagWindow = new Popup();
 
@@ -973,19 +1055,117 @@ public class ServiceDraw {
             guiComponents.add(close);
 
             VBox vBox = new VBox();
-            vBox.setAlignment(Pos.CENTER_RIGHT);
+            vBox.setAlignment(Pos.CENTER);
             vBox.getStylesheets().add(stylesheet);
             vBox.getStyleClass().add("tagBox");
-            vBox.setPrefWidth(textWidth+labelWidth+5);
+            vBox.setPrefWidth(textWidth + labelWidth + 5);
             vBox.getChildren().addAll(guiComponents);
             tagWindow.getContent().add(vBox);
             tagWindow.show(mainStage);
             tagWindow.setAutoHide(true);
         };
-        GuiButton tag = new PictureButton("T",tagCommand,null);
+        GuiButton tag = new PictureButton("T", tagCommand, null);
         buttons.add(tag);
 
         return buttons;
+    }
+
+    private void s3Calculate(Service s3Service, Label objectCount, Label size) {
+        Platform.runLater(() -> {
+            size.setCursor(Cursor.DEFAULT);
+            size.setOnMouseClicked(null);
+            size.setTextFill(Color.PURPLE);
+            size.setText("Calculating");
+            objectCount.setCursor(Cursor.DEFAULT);
+            objectCount.setOnMouseClicked(null);
+            objectCount.setText("Calculating");
+            objectCount.setTextFill(Color.PURPLE);
+        });
+
+        Validate.notNull(s3Service);
+        Validate.notNull(objectCount);
+        Validate.notNull(size);
+
+        if (!(s3Service instanceof LocalS3Service)) {
+            System.err.println("Not instance of s3 for s3Calculate");
+            return;
+        }
+
+
+        LocalS3Service s3 = (LocalS3Service) s3Service;
+        List<S3ObjectSummary> objectSummaries = s3.getObjectSummaries();
+        String sizeString = " B";
+        double sizeCount = 0;
+        int objects = 0;
+        for (S3ObjectSummary summary : objectSummaries) {
+            sizeCount += summary.getSize();
+            objects++;
+        }
+
+        if (sizeCount > 1024) {
+            sizeCount = sizeCount / 1024;
+            sizeString = " KB";
+        }
+        if (sizeCount > 1024) {
+            sizeCount = sizeCount / 1024;
+            sizeString = " MB";
+        }
+        if (sizeCount > 1024) {
+            sizeCount = sizeCount / 1024;
+            sizeString = " GB";
+        }
+
+        sizeCount = Main.round(sizeCount, 1);
+
+        String objectsString = String.valueOf(objects);
+        String sizeStr = sizeCount + sizeString;
+
+        Platform.runLater(() -> {
+            objectCount.setText(objectsString);
+            objectCount.getStyleClass().removeAll("hyperlink");
+            objectCount.setTextFill(Color.BLACK);
+            objectCount.setCursor(Cursor.DEFAULT);
+            objectCount.setOnMouseClicked(null);
+            size.setText(sizeStr);
+            size.getStyleClass().removeAll("hyperlink");
+            size.setTextFill(Color.BLACK);
+            size.setCursor(Cursor.DEFAULT);
+            size.setOnMouseClicked(null);
+        });
+
+        s3.setSize(sizeStr);
+        s3.setNumberOfObjects(objects);
+    }
+
+    private void queueS3Calculate(Service s3Service, Label objectCount, Label size) {
+        if(s3Service.serviceSize().equalsIgnoreCase("")) {
+            toCalculate.add(new s3QueueObject(s3Service, objectCount, size));
+            startCalculate();
+        }
+    }
+
+    private void startCalculate() {
+        if (toCalculate.size() == 0) {
+            return;
+        }
+        Task<Void> calcAll = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+
+                if (toCalculate.size() == 0 || calculating) {
+                    return null;
+                }
+                s3QueueObject currentObject = toCalculate.poll();
+                while (currentObject != null) {
+                    s3Calculate(currentObject.getS3Service(),currentObject.getObjectCount(),currentObject.getSize());
+                    currentObject = toCalculate.poll();
+                }
+                return null;
+            }
+        };
+        Thread thr = new Thread(calcAll);
+        thr.setPriority(Thread.MIN_PRIORITY);
+        thr.start();
     }
 
     public List<VBox> drawAccount(AmazonAccount account) {
@@ -1022,17 +1202,17 @@ public class ServiceDraw {
         return regionNames;
     }
 
-    private HBox createButtons(GuiButton... buttons){
+    private HBox createButtons(GuiButton... buttons) {
         ArrayList<Node> c = new ArrayList<>();
-        for (GuiButton b : buttons){
+        for (GuiButton b : buttons) {
             Button button;
-            if(b.display() == null){
+            if (b.display() == null) {
                 button = new Button(b.name());
             } else {
-                button = new Button("",b.display());
+                button = new Button("", b.display());
             }
-            if(b.command() != null){
-                button.setOnAction(event->{
+            if (b.command() != null) {
+                button.setOnAction(event -> {
                     b.command().run();
                 });
             }
@@ -1045,7 +1225,7 @@ public class ServiceDraw {
         hbox.setAlignment(Pos.BOTTOM_CENTER);
         hbox.getStyleClass().add("serviceButtons");
         hbox.setMaxWidth(serviceWidth);
-        hbox.setPrefHeight(serviceHeight/2);
+        hbox.setPrefHeight(serviceHeight / 2);
         return hbox;
     }
 }

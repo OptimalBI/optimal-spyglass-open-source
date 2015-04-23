@@ -105,6 +105,7 @@ public class Main extends Application {
     private final File settingsFile = new File("settings.cfg");
     private final File pricingDir = new File("pricing\\");
     private Button curButton = null;
+    private Set<Button> allToolButtons;
     private Map<Region, ServicePricing> pricings;
     //Bounds of the application
     private Rectangle2D primaryScreenBounds;
@@ -266,7 +267,7 @@ public class Main extends Application {
     }
 
     private void newPassword(String failedMessage) {
-        double textWidth = 120;
+        double textWidth = 145;
         double boxWidth = 160;
 
         if (failedMessage == null) {
@@ -276,28 +277,34 @@ public class Main extends Application {
         Pos alignment = Pos.BASELINE_LEFT;
 
         //Info Text
-        Text infoText = new Text("Hello!\n" +
-                "We noticed that you haven't used OptimalSpyglass before (or you are just setting it up again).\n \n" +
-                "Please take note of a few things:\n" +
-                "   OptimalSpyglass takes security seriously, we encypt your secret key(s) with the password provided.\n" +
-                "   Pricing is based on the information found in the pricing folder, feel free to edit and update this to reflect your costs.\n" +
-                "   While OptimalSpyglass doesnt show everything that can run in your AWS account it can show you the big things!\n \n" +
-                "Thanks for using Optimal Spyglass. Any questions please visit www.github.com/OptimalBI/optimal-spyglass-open-source (or click here).\n" +
-                "   ");
-        infoText.setOnMouseClicked(mouseValue -> {
+        Text infoText = new Text("Hello there, let’s get things setup for you.\n \n" +
+                "A couple of things to remember before we get started: \n\n" +
+                " - OptimalSpyglass takes security seriously, your keys are encrypted with the password you provide - for your own piece of mind, please make sure it’s a good one!\n" +
+                " - Pricing is based on a CSV in the pricing folder that you may need to update from time to time as prices change\n" +
+                " - OptimalSpyglass doesn’t yet show you everything in your accounts, please check the ready to see which resources are supported\n");
+        Text htmlLinkLabel = new Text("Thanks for using Optimal Spyglass. Let us know how we can make it better at ");
+        Text htmlLink = new Text("http://www.github.com/OptimalBI/optimal-spyglass-open-source");
+        htmlLink.getStyleClass().add("hyperlink");
+        htmlLink.setOnMouseClicked(mouseValue -> {
             try {
                 openWebpage(new URI("https://github.com/OptimalBI/optimal-spyglass-open-source"));
             } catch (URISyntaxException e) {
                 logger.error("Error opening webpage: " + e.getMessage());
             }
         });
-        infoText.setCursor(Cursor.HAND);
-        c.add(infoText);
+        htmlLink.setCursor(Cursor.HAND);
+        HBox linkBox = new HBox(htmlLinkLabel, htmlLink);
+        VBox chatBox = new VBox(infoText, linkBox);
+        chatBox.getStylesheets().add(styleSheet);
+        c.add(chatBox);
+
+        VBox seperator = new VBox();
+        c.add(seperator);
 
         //Prompt Text
-        Label promptLabel = new Label("Please enter the password you want use for this application");
-        promptLabel.setPrefWidth(applicationWidth);
-        promptLabel.setAlignment(Pos.CENTER);
+//        Label promptLabel = new Label("Please enter the password you want use for this application");
+//        promptLabel.setPrefWidth(applicationWidth);
+//        promptLabel.setAlignment(Pos.CENTER);
 
         //Fail Text
         Label failText = new Label(failedMessage);
@@ -310,7 +317,7 @@ public class Main extends Application {
 
         //TextField
         Label fLabel = new Label("Password:");
-        fLabel.setMinWidth(textWidth);
+//        fLabel.setMinWidth(textWidth);
         fLabel.setAlignment(alignment);
         PasswordField field = new PasswordField();
         field.setMinWidth(boxWidth);
@@ -322,6 +329,7 @@ public class Main extends Application {
         Label sFLabel = new Label("Confirmation:");
         sFLabel.setMinWidth(textWidth);
         sFLabel.setAlignment(alignment);
+        sFLabel.setAlignment(Pos.CENTER_RIGHT);
         PasswordField secondField = new PasswordField();
         secondField.setMinWidth(boxWidth);
         HBox sFBox = new HBox(sFLabel, secondField);
@@ -361,7 +369,7 @@ public class Main extends Application {
         secondField.setOnAction(go);
         okBtn.setOnAction(go);
 
-        VBox passwordsBox = new VBox(promptLabel, passwords, btnBox);
+        VBox passwordsBox = new VBox(passwords, btnBox);
         passwordsBox.setPrefWidth(applicationWidth);
         passwordsBox.setAlignment(Pos.CENTER);
 
@@ -756,7 +764,7 @@ public class Main extends Application {
         buttonMenu.setAlignment(Pos.CENTER_LEFT);
 
         ToolBar toolButtons = new ToolBar();
-        summary = guiFactory.createButton("", iconHeight+5, iconHeight+5);
+        summary = guiFactory.createButton("", iconHeight + 5, iconHeight + 5);
         ImageView summaryIcon = new ImageView("SummaryView.png");
         summaryIcon.setPreserveRatio(true);
         summaryIcon.setSmooth(false);
@@ -770,7 +778,7 @@ public class Main extends Application {
         });
         toolButtons.getItems().add(summary);
 
-        Button box = guiFactory.createButton("", iconHeight+5, iconHeight+5);
+        Button box = guiFactory.createButton("", iconHeight + 5, iconHeight + 5);
         box.setOnAction(ActionEvent -> {
             if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
                 guimode = guiModes.BOXES;
@@ -784,7 +792,7 @@ public class Main extends Application {
         box.setGraphic(boxIcon);
         toolButtons.getItems().add(box);
 
-        Button list = guiFactory.createButton("", iconHeight+5, iconHeight+5);
+        Button list = guiFactory.createButton("", iconHeight + 5, iconHeight + 5);
         list.setOnAction(ActionEvent -> {
             if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD))) {
                 guimode = guiModes.LIST;
@@ -798,7 +806,7 @@ public class Main extends Application {
         list.setGraphic(listIcon);
 
         toolButtons.getItems().add(list);
-        toolButtons.setMinWidth(iconHeight*3);
+        toolButtons.setMinWidth(iconHeight * 3);
         toolButtons.getStyleClass().add("toolbar");
 
         HBox filterButtons = new HBox(toolButtons);
@@ -821,6 +829,7 @@ public class Main extends Application {
     }
 
     private ToolBar regionFilterToolbar() {
+        allToolButtons = new HashSet<>();
         Map<String, String> regionNames = Service.regionNames();
         double minWidth = 60;
 
@@ -829,24 +838,25 @@ public class Main extends Application {
         regionLabel.getStyleClass().add("toolbarLabel");
         toolButtons.add(regionLabel);
 
-        all = guiFactory.createButton("All","regionButton",35,25);
+        all = guiFactory.createButton("All", "regionButton", 35, 25);
         curButton = all;
         all.getStyleClass().add("regionButtonActive");
-        all.setOnAction(event->{
+        all.setOnAction(event -> {
             viewedRegion = "all";
             all.getStyleClass().add("regionButtonActive");
             curButton.getStyleClass().remove("regionButtonActive");
             curButton = all;
             updateCentrePainting();
         });
+        allToolButtons.add(all);
         toolButtons.add(all);
 
         for (Region region : currentRegions) {
             Button adding;
             if (regionNames.containsKey(region.getName())) {
-                adding = guiFactory.createButton(regionNames.get(region.getName()),"regionButton" ,-1, -1);
+                adding = guiFactory.createButton(regionNames.get(region.getName()),"regionButton",-1,-1);
             } else {
-                adding = guiFactory.createButton(region.getName(),"regionButton" ,-1, -1);
+                adding = guiFactory.createButton(region.getName(),"regionButton",-1,-1);
             }
             adding.setOnAction(ActionEvent -> {
                 if (!(guimode.equals(guiModes.ASK_PASSWORD) || guimode.equals(guiModes.NEW_PASSWORD) || guimode.equals(guiModes.SUMMARY))) {
@@ -858,6 +868,7 @@ public class Main extends Application {
                 }
             });
             toolButtons.add(adding);
+            allToolButtons.add(adding);
         }
 
         ToolBar toolBar = new ToolBar();
@@ -973,6 +984,15 @@ public class Main extends Application {
             new Thread(task).start();
             redrawHook = true;
         }
+        if (allToolButtons != null) {
+            for (Button b : allToolButtons) {
+                if (guimode.equals(guiModes.LIST) || guimode.equals(guiModes.BOXES)) {
+                    b.setDisable(false);
+                } else {
+                    b.setDisable(true);
+                }
+            }
+        }
         switch (guimode) {
             case NEW_PASSWORD:
                 newPassword("");
@@ -1017,7 +1037,7 @@ public class Main extends Application {
      */
     private void drawServiceBoxes() {
 
-        BigDecimal iW = new BigDecimal((((mainStage.getWidth())) / ServiceDraw.serviceWidth));
+        BigDecimal iW = new BigDecimal((((mainStage.getWidth()) + 160) / ServiceDraw.serviceWidth));
         int instancesWide = iW.intValue();
 
         ServiceDraw draw = new ServiceDraw(styleSheet, guiFactory, mainStage);
@@ -1105,7 +1125,7 @@ public class Main extends Application {
             all.requestFocus();
             tableView.getFocusModel().focus(0);
         });
-        tableView.setOnMouseClicked(mouseEvent->{
+        tableView.setOnMouseClicked(mouseEvent -> {
             all.requestFocus();
             tableView.getSelectionModel().clearSelection();
         });
@@ -1114,7 +1134,7 @@ public class Main extends Application {
         Map<Service, AmazonAccount> accountService = new HashMap<>();
         for (AmazonAccount acc : accounts) {
             for (Service s : acc.getServices()) {
-                if(s.serviceRegion().getName().equals(viewedRegion) || viewedRegion.equals("all") || s.serviceType().equalsIgnoreCase("s3")) {
+                if (s.serviceRegion().getName().equals(viewedRegion) || viewedRegion.equals("all") || s.serviceType().equalsIgnoreCase("s3")) {
                     accountService.put(s, acc);
                     tableView.getItems().add(s);
                 }
@@ -1148,7 +1168,7 @@ public class Main extends Application {
         TableColumn<Service, String> serviceNameCol = new TableColumn<>("Name");
         serviceNameCol.setCellValueFactory(cellData -> {
             String serviceName = cellData.getValue().serviceName();
-            if(serviceName.equals("")){
+            if (serviceName.equals("")) {
                 serviceName = cellData.getValue().serviceID();
             }
             return new SimpleStringProperty(serviceName);
@@ -1170,7 +1190,7 @@ public class Main extends Application {
         serviceCostCol.setCellValueFactory(cellData -> {
             Double cost = cellData.getValue().servicePrice();
             cost = round(cost, 2);
-            if(cost==0){
+            if (cost == 0) {
                 return new SimpleObjectProperty<>();
             }
             return new SimpleObjectProperty<>(cost);
@@ -1214,28 +1234,21 @@ public class Main extends Application {
         TableColumn<Service, String> serviceTagsCol = new TableColumn<>("Tags");
         serviceTagsCol.setPrefWidth(520);
         serviceTagsCol.setCellValueFactory(cellData -> {
-            StringBuilder sb = new StringBuilder();
-            for (Map.Entry<String, String> tag : cellData.getValue().getTags().entrySet()) {
-                sb.append(String.format("%s:%s, ", tag.getKey(), tag.getValue()));
-            }
-            return new SimpleStringProperty(sb.toString());
+            return new SimpleStringProperty(cellData.getValue().getTagsString());
         });
-        serviceTagsCol.setCellFactory(cell -> {
-            return new TableCell<Service, String>() {
-                @Override
-                protected void updateItem(String item, boolean empty) {
-                    super.updateItem(item, empty);
-                    setStyle("-fx-alignment: CENTER-LEFT;");
+        serviceTagsCol.setCellFactory(cell -> new TableCell<Service, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setStyle("-fx-alignment: CENTER-LEFT;");
 
 
-                    if (item == null || empty) {
-                        setText(null);
-                    } else {
-                        setText(item);
-                    }
+                if (item == null || empty) {
+                    setText(null);
+                } else {
+                    setText(item);
                 }
-            };
-
+            }
         });
         tableView.getColumns().add(serviceTagsCol);
 
@@ -1905,16 +1918,20 @@ public class Main extends Application {
         int runningEc2 = 0;
         int runningRDS = 0;
         int runningRedshift = 0;
+        int runningS3 = 0;
+        int runningDDB = 0;
         Double runningCosts = 0.0;
         //All running types
         for (AmazonAccount account : accounts) {
             Map<String, Integer> thisRC = account.getRunningCount();
             if (thisRC.size() > 0) {
-                runningEc2 = runningEc2 + thisRC.get("ec2");
-                runningRDS = runningRDS + thisRC.get("rds");
-                runningRedshift = runningRedshift + thisRC.get("redshift");
+                runningEc2 = runningEc2 + thisRC.get("EC2");
+                runningRDS = runningRDS + thisRC.get("RDS");
+                runningRedshift = runningRedshift + thisRC.get("Redshift");
+                runningS3 = runningS3 + thisRC.get("S3");
+                runningDDB += thisRC.get("DynamoDB");
                 for (Service service : account.getServices()) {
-                    if (!service.serviceState().equalsIgnoreCase("stopped")) {
+                    if (Service.runningTitles().contains(service.serviceState())) {
                         runningCosts += service.servicePrice();
                     }
                 }
@@ -1934,6 +1951,12 @@ public class Main extends Application {
         HBox runningRedshiftBox = guiFactory.labelAndField("Running Redshift: ", "" + runningRedshift, textWidth, labelWidth, styleClass);
         c.add(runningRedshiftBox);
 
+        HBox runningS3Box = guiFactory.labelAndField("Running S3: ", "" + runningS3, textWidth, labelWidth, styleClass);
+        c.add(runningS3Box);
+
+        HBox runningDDBBox = guiFactory.labelAndField("Running DynamoDB: ", "" + runningDDB, textWidth, labelWidth, styleClass);
+        c.add(runningDDBBox);
+
         if (pricings.size() != 0) {
             HBox runningCostsBox = guiFactory.labelAndField("Running Costs ($/hr): ", "$" + String.format("%.2f", round(runningCosts, 2)), textWidth, labelWidth, styleClass);
             c.add(runningCostsBox);
@@ -1950,13 +1973,17 @@ public class Main extends Application {
             int thisRunningEc2 = 0;
             int thisRunningRedshift = 0;
             int thisRunningRDS = 0;
+            int thisRunningS3 = 0;
+            int thisRunningDDB = 0;
             double thisRunningCosts = 0;
 
             Map<String, Integer> thisRC = account.getRunningCount();
             if (thisRC.size() > 0) {
-                thisRunningEc2 = thisRunningEc2 + thisRC.get("ec2");
-                thisRunningRDS = thisRunningRDS + thisRC.get("rds");
-                thisRunningRedshift = thisRunningRedshift + thisRC.get("redshift");
+                thisRunningEc2 = thisRunningEc2 + thisRC.get("EC2");
+                thisRunningRDS = thisRunningRDS + thisRC.get("RDS");
+                thisRunningRedshift = thisRunningRedshift + thisRC.get("Redshift");
+                thisRunningDDB += thisRC.get("DynamoDB");
+                thisRunningS3 += thisRC.get("S3");
 
                 for (Service service : account.getServices()) {
                     if (Service.runningTitles().contains(service.serviceState())) {
@@ -1981,7 +2008,11 @@ public class Main extends Application {
 
             HBox accountRedshiftBox = guiFactory.labelAndField("Running Redshift: ", "" + thisRunningRedshift, textWidth, labelWidth, styleClass);
 
-            VBox thisAccountStats = new VBox(accountTitle, allServicesBox, allRunningBox, space2, accountEc2Box, accountRDSBox, accountRedshiftBox);
+            HBox accountS3Box = guiFactory.labelAndField("Running S3: ", "" + thisRunningS3, textWidth, labelWidth, styleClass);
+
+            HBox accountDDBBox = guiFactory.labelAndField("Running DynamoDB: ", "" + thisRunningDDB, textWidth, labelWidth, styleClass);
+
+            VBox thisAccountStats = new VBox(accountTitle, allServicesBox, allRunningBox, space2, accountEc2Box, accountRDSBox, accountRedshiftBox, accountS3Box, accountDDBBox);
             if (pricings.size() != 0) {
                 HBox accountCostsBox = guiFactory.labelAndField("Current Costs ($/hr): ", "$" + String.format("%.2f", round(thisRunningCosts, 2)), textWidth, labelWidth, styleClass);
                 thisAccountStats.getChildren().add(accountCostsBox);
