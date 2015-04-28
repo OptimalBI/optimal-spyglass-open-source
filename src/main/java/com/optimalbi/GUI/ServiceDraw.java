@@ -6,6 +6,7 @@ import com.optimalbi.GUI.TjfxFactory.GuiButton;
 import com.optimalbi.GUI.TjfxFactory.PictureButton;
 import com.optimalbi.GUI.TjfxFactory.TjfxFactory;
 import com.optimalbi.Services.LocalDynamoDBService;
+import com.optimalbi.Services.LocalGlacierService;
 import com.optimalbi.Services.LocalS3Service;
 import com.optimalbi.Services.Service;
 import javafx.application.Platform;
@@ -20,6 +21,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.effect.Bloom;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.effect.Shadow;
+import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -39,7 +41,7 @@ import java.util.stream.Collectors;
  * Version: 1.01
  */
 public class ServiceDraw {
-    public static final int buttonWidth = 40;
+    public static final int buttonWidth = 35;
     public static final int buttonHeight = buttonWidth;
     public static final int serviceWidth = 240;
     public static int serviceHeight = 220;
@@ -71,6 +73,9 @@ public class ServiceDraw {
             drawing = drawDynamoDB(service, buttons);
         } else if (service.serviceType().equalsIgnoreCase("s3")) {
             drawing = drawS3(service, buttons);
+        } else if (service.serviceType().equalsIgnoreCase("glacier")){
+            drawing = drawGlacier(service,buttons);
+
         } else {
             drawing = drawGeneric(service);
         }
@@ -364,7 +369,7 @@ public class ServiceDraw {
             tagWindow.show(mainStage);
             tagWindow.setAutoHide(true);
         };
-        GuiButton tag = new PictureButton("T", tagCommand, null);
+        GuiButton tag = new PictureButton("", tagCommand, new Image("Tag.png"));
         buttons.add(tag);
 
         return buttons;
@@ -829,6 +834,107 @@ public class ServiceDraw {
         return buttons;
     }
 
+    private VBox drawGlacier(Service service, GuiButton... buttons){
+        VBox drawing = new VBox();
+
+        Pos align = Pos.CENTER;
+
+        List<Node> c = new ArrayList<>();
+
+        //Instance Type
+        Label instanceType = new Label(stringCap(service.serviceType()));
+        instanceType.setAlignment(Pos.CENTER);
+        instanceType.getStyleClass().add("storageTitle");
+        instanceType.setPrefWidth(serviceWidth);
+        c.add(instanceType);
+
+        //TODO: Remove temp region label
+        Label regionName;
+        if (Service.regionNames().containsKey(service.serviceRegion().getName())) {
+            regionName = new Label(Service.regionNames().get(service.serviceRegion().getName()));
+        } else {
+            regionName = new Label(service.serviceID());
+        }
+        regionName.setPrefWidth(serviceWidth);
+        regionName.setAlignment(Pos.CENTER);
+        regionName.getStyleClass().add("regionTitle");
+        c.add(regionName);
+
+        //Instance Name
+        Label instanceName = new Label(service.serviceName());
+        if (service.serviceName().equals("")) {
+            instanceName = new Label(service.serviceID());
+        }
+        instanceName.setPrefWidth(serviceWidth);
+        instanceName.setAlignment(Pos.CENTER);
+        instanceName.getStylesheets().add(stylesheet);
+        instanceName.getStyleClass().add("instanceName");
+        c.add(instanceName);
+
+        //Size
+        Label instanceSizeLabel = new Label("Size: ");
+        instanceSizeLabel.setPrefWidth(labelWidth);
+        instanceSizeLabel.setAlignment(Pos.BASELINE_RIGHT);
+        instanceSizeLabel.getStyleClass().add("guiLabel");
+        Label instanceSize = new Label(service.serviceSize());
+        instanceSize.setPrefWidth(labelWidth);
+
+
+        HBox sizeBox = new HBox(instanceSizeLabel, instanceSize);
+        sizeBox.setPrefWidth(serviceWidth);
+        sizeBox.setAlignment(align);
+        c.add(sizeBox);
+
+        Label instanceCountLabel = new Label("Archives:");
+        instanceCountLabel.setPrefWidth(labelWidth);
+        instanceCountLabel.setAlignment(Pos.BASELINE_RIGHT);
+        instanceCountLabel.getStyleClass().add("guiLabel");
+        LocalGlacierService temp = (LocalGlacierService) service;
+        Label instanceCount = new Label(""+temp.getNumberOfObjects());
+        instanceCount.setPrefWidth(labelWidth);
+
+        HBox countBox = new HBox(instanceCountLabel, instanceCount);
+        countBox.setPrefWidth(serviceWidth);
+        countBox.setAlignment(align);
+        c.add(countBox);
+
+        //Instance State
+        Label instanceState = new Label(service.serviceState().toLowerCase());
+        instanceState.setAlignment(Pos.TOP_CENTER);
+        instanceState.setPrefWidth(serviceWidth);
+        if (Service.runningTitles().contains(service.serviceState().toLowerCase())) {
+            instanceState.setTextFill(Color.GREEN);
+        } else if (service.serviceState().equalsIgnoreCase("stopped")) {
+            instanceState.setTextFill(Color.RED);
+        } else {
+            instanceState.setTextFill(Color.ORANGERED);
+        }
+        c.add(instanceState);
+
+        List<GuiButton> guiButtons = addGlacierButtons(service, buttons);
+
+        GuiButton[] finalButtons = new GuiButton[guiButtons.size()];
+        finalButtons = guiButtons.toArray(finalButtons);
+
+        HBox buttonBox = createButtons(finalButtons);
+        c.add(buttonBox);
+
+        drawing.getChildren().addAll(c);
+        drawing.setAlignment(Pos.TOP_CENTER);
+
+        drawing.setPrefHeight(serviceHeight);
+        drawing.setMinWidth(serviceWidth);
+        drawing.getStylesheets().add(stylesheet);
+        drawing.getStyleClass().add("instance");
+        return drawing;
+    }
+
+    private List<GuiButton> addGlacierButtons(Service service, GuiButton... currentButtons) {
+        List<GuiButton> buttons = new ArrayList<>();
+        Collections.addAll(buttons, currentButtons);
+        return buttons;
+    }
+
     private VBox drawS3(Service service, GuiButton... buttons) {
         boolean alreadyCalc = false;
         if(!service.serviceSize().equalsIgnoreCase("")){
@@ -1064,7 +1170,7 @@ public class ServiceDraw {
             tagWindow.show(mainStage);
             tagWindow.setAutoHide(true);
         };
-        GuiButton tag = new PictureButton("T", tagCommand, null);
+        GuiButton tag = new PictureButton("", tagCommand, new Image("Tag.png"));
         buttons.add(tag);
 
         return buttons;
@@ -1209,7 +1315,7 @@ public class ServiceDraw {
             if (b.display() == null) {
                 button = new Button(b.name());
             } else {
-                button = new Button("", b.display());
+                button = new Button("", b.display(buttonWidth-5,buttonHeight-5));
             }
             if (b.command() != null) {
                 button.setOnAction(event -> {
@@ -1217,7 +1323,8 @@ public class ServiceDraw {
                 });
             }
             button.getStyleClass().add("serviceButton");
-            button.setPrefSize(buttonWidth, buttonHeight);
+            button.setMaxSize(buttonWidth,buttonHeight);
+            button.setMinSize(buttonWidth,buttonHeight);
             c.add(button);
         }
         HBox hbox = new HBox();

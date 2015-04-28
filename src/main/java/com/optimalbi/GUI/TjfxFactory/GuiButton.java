@@ -10,4 +10,5 @@ public interface GuiButton {
     public String name();
     public Runnable command();
     public Node display();
+    public Node display(int width, int height);
 }

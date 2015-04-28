@@ -30,4 +30,13 @@ public class PictureButton extends MainButton {
     public Node display() {
         return image;
     }
+
+    public Node display(int width, int height){
+        Image temp = image.getImage();
+        ImageView imageView = new ImageView(temp);
+        imageView.setFitWidth(width);
+        imageView.setFitHeight(height);
+        imageView.setPreserveRatio(true);
+        return imageView;
+    }
 }

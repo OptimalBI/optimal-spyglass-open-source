@@ -92,7 +92,7 @@ import java.util.stream.Collectors;
  * @author Timothy Gray
  */
 public class Main extends Application {
-    private static final int[] curVer = {0, 9, 0};
+    private static final int[] curVer = {1, 0, 0};
     private static double applicationHeight;
     private static double applicationWidth;
     private static Stage mainStage;
@@ -243,7 +243,7 @@ public class Main extends Application {
         createGUI();
 
         //TODO: Add icon image;
-        mainStage.getIcons().add(new Image("Optimal_Logo_CMYK_1Icon.png"));
+        mainStage.getIcons().add(new Image("favicon.png"));
         mainStage.setTitle("OptimalSpyglass");
         mainStage.show();
 
@@ -1005,8 +1005,10 @@ public class Main extends Application {
                 break;
             case SUMMARY:
                 viewedRegion = "all";
-                curButton.getStyleClass().remove("regionButtonActive");
-                all.getStyleClass().add("regionButtonActive");
+                Platform.runLater(() -> {
+                    curButton.getStyleClass().remove("regionButtonActive");
+                    all.getStyleClass().add("regionButtonActive");
+                });
                 curButton = all;
                 drawSummary();
                 break;
@@ -1066,7 +1068,7 @@ public class Main extends Application {
                                 dialog.setAutoHide(true);
                                 dialog.show(mainStage);
                             };
-                            box = draw.drawOne(service, new PictureButton("G", command, null));
+                            box = draw.drawOne(service, new PictureButton("", command, new Image("Graph.png")));
                         } else {
                             box = draw.drawOne(service);
                         }
@@ -1920,6 +1922,7 @@ public class Main extends Application {
         int runningRedshift = 0;
         int runningS3 = 0;
         int runningDDB = 0;
+        int runningGlacier = 0;
         Double runningCosts = 0.0;
         //All running types
         for (AmazonAccount account : accounts) {
@@ -1930,6 +1933,7 @@ public class Main extends Application {
                 runningRedshift = runningRedshift + thisRC.get("Redshift");
                 runningS3 = runningS3 + thisRC.get("S3");
                 runningDDB += thisRC.get("DynamoDB");
+                runningGlacier += thisRC.get("Glacier");
                 for (Service service : account.getServices()) {
                     if (Service.runningTitles().contains(service.serviceState())) {
                         runningCosts += service.servicePrice();
@@ -1957,6 +1961,9 @@ public class Main extends Application {
         HBox runningDDBBox = guiFactory.labelAndField("Running DynamoDB: ", "" + runningDDB, textWidth, labelWidth, styleClass);
         c.add(runningDDBBox);
 
+        HBox runningGlacierBox = guiFactory.labelAndField("Running Glacier: ", "" + runningGlacier, textWidth, labelWidth, styleClass);
+        c.add(runningGlacierBox);
+
         if (pricings.size() != 0) {
             HBox runningCostsBox = guiFactory.labelAndField("Running Costs ($/hr): ", "$" + String.format("%.2f", round(runningCosts, 2)), textWidth, labelWidth, styleClass);
             c.add(runningCostsBox);
@@ -1975,6 +1982,7 @@ public class Main extends Application {
             int thisRunningRDS = 0;
             int thisRunningS3 = 0;
             int thisRunningDDB = 0;
+            int thisRunningGlacier = 0;
             double thisRunningCosts = 0;
 
             Map<String, Integer> thisRC = account.getRunningCount();
@@ -1984,6 +1992,7 @@ public class Main extends Application {
                 thisRunningRedshift = thisRunningRedshift + thisRC.get("Redshift");
                 thisRunningDDB += thisRC.get("DynamoDB");
                 thisRunningS3 += thisRC.get("S3");
+                thisRunningGlacier += thisRC.get("Glacier");
 
                 for (Service service : account.getServices()) {
                     if (Service.runningTitles().contains(service.serviceState())) {
@@ -2012,7 +2021,10 @@ public class Main extends Application {
 
             HBox accountDDBBox = guiFactory.labelAndField("Running DynamoDB: ", "" + thisRunningDDB, textWidth, labelWidth, styleClass);
 
-            VBox thisAccountStats = new VBox(accountTitle, allServicesBox, allRunningBox, space2, accountEc2Box, accountRDSBox, accountRedshiftBox, accountS3Box, accountDDBBox);
+            HBox accountGlaicerBox = guiFactory.labelAndField("Running Glacier: ", "" + thisRunningGlacier, textWidth, labelWidth, styleClass);
+
+
+            VBox thisAccountStats = new VBox(accountTitle, allServicesBox, allRunningBox, space2, accountEc2Box, accountRDSBox, accountRedshiftBox, accountS3Box, accountDDBBox,accountGlaicerBox);
             if (pricings.size() != 0) {
                 HBox accountCostsBox = guiFactory.labelAndField("Current Costs ($/hr): ", "$" + String.format("%.2f", round(thisRunningCosts, 2)), textWidth, labelWidth, styleClass);
                 thisAccountStats.getChildren().add(accountCostsBox);
