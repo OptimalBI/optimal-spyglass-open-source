@@ -384,7 +384,7 @@ public class ServiceDraw {
 
         //Instance Type
         Label instanceType = new Label(stringCap(service.serviceType()));
-        instanceType.getStyleClass().add("rdsTitle");
+        instanceType.getStyleClass().add("DBTitle");
         instanceType.setAlignment(Pos.CENTER);
         instanceType.setPrefWidth(serviceWidth);
         c.add(instanceType);
@@ -504,20 +504,7 @@ public class ServiceDraw {
 
         //Instance Type
         Label instanceType = new Label(stringCap(service.serviceType()));
-        switch (service.serviceType()) {
-            case "RDS":
-                instanceType.getStyleClass().add("rdsTitle");
-                break;
-            case "ec2":
-                instanceType.getStyleClass().add("ec2Title");
-                break;
-            case "Redshift":
-                instanceType.getStyleClass().add("redshiftTitle");
-                break;
-            default:
-                instanceType.getStyleClass().add("statisticsTitle");
-                break;
-        }
+        instanceType.getStyleClass().add("DBTitle");
         instanceType.setAlignment(Pos.CENTER);
         instanceType.setPrefWidth(serviceWidth);
         c.add(instanceType);

@@ -109,19 +109,23 @@ v0.0.5
 	* Added change password system.
 	* Remove unneeded debug messages.
 v0.0.6
-	* Fixed password GUI bugs
-	* Updated branding
-	* Updated licence
+	* Fixed password GUI bugs.
+	* Updated branding.
+	* Updated licence.
 v0.7
-	* Updated the dialog drawing system to help it to draw when needed
-	* Tweaked OSX fonts to make it look more similar
-	* Added a version notification system to help people know about new releases
+	* Updated the dialog drawing system to help it to draw when needed.
+	* Tweaked OSX fonts to make it look more similar.
+	* Added a version notification system to help people know about new releases.
 v0.8
-	* Update AWS library to 1.9.19
-	* Changed font system to use Google Fonts so that the app is consistent across all OS's
-	* Added SimpleLog with its proper path
-	* Added Redshift and RDS to the pricing information
-	* Added labels and fixed GUI bugs
-	* Assorted minor bug fixes
-v0.9
+	* Update AWS library to 1.9.19.
+	* Changed font system to use Google Fonts so that the app is consistent across all OS's.
+	* Added SimpleLog with its proper path.
+	* Added Redshift and RDS to the pricing information.
+	* Added labels and fixed GUI bugs.
+	* Assorted minor bug fixes.
+v1.0
+    * Update AWS library to 1.9.33.
+    * Reformatted GUI to give the more important stuff more room.
+    * Added S3, DynamoDB and Glacier.
+    * Added a list view so you can sort on important stuff.
 ```

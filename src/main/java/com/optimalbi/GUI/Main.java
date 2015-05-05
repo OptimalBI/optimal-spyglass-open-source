@@ -343,9 +343,8 @@ public class Main extends Application {
         //Go button
         Button okBtn = guiFactory.createButton("Okay", textWidth, 12);
         HBox btnBox = new HBox(okBtn);
-        logger.info("Buttons thing: " + (boxWidth + textWidth) * 2);
-        btnBox.setPrefWidth(675);
-        btnBox.setMaxWidth(675);
+        btnBox.setPrefWidth(665);
+        btnBox.setMaxWidth(665);
         btnBox.setAlignment(Pos.BASELINE_RIGHT);
 
         EventHandler<ActionEvent> go = event -> {
