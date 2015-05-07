@@ -279,10 +279,12 @@ public class Main extends Application {
         //Info Text
         Text infoText = new Text("Hello there, let’s get things setup for you.\n \n" +
                 "A couple of things to remember before we get started: \n\n" +
-                " - OptimalSpyglass takes security seriously, your keys are encrypted with the password you provide - for your own piece of mind, please make sure it’s a good one!\n" +
+                " - OptimalSpyglass takes security seriously, your keys are encrypted with the password you provide,\n" +
+                "       for your own piece of mind, please make sure it’s a good one!\n" +
                 " - Pricing is based on a CSV in the pricing folder that you may need to update from time to time as prices change\n" +
-                " - OptimalSpyglass doesn’t yet show you everything in your accounts, please check the ready to see which resources are supported\n");
-        Text htmlLinkLabel = new Text("Thanks for using Optimal Spyglass. Let us know how we can make it better at ");
+                " - OptimalSpyglass doesn’t yet show you everything in your accounts but you can request them in Github\n");
+        Text htmlLinkLabel = new Text("Thanks for using Optimal Spyglass.");
+        Text htmlLinkLabel2 = new Text("Let us know how we can make it better at ");
         Text htmlLink = new Text("http://www.github.com/OptimalBI/optimal-spyglass-open-source");
         htmlLink.getStyleClass().add("hyperlink");
         htmlLink.setOnMouseClicked(mouseValue -> {
@@ -293,8 +295,8 @@ public class Main extends Application {
             }
         });
         htmlLink.setCursor(Cursor.HAND);
-        HBox linkBox = new HBox(htmlLinkLabel, htmlLink);
-        VBox chatBox = new VBox(infoText, linkBox);
+        HBox linkBox = new HBox(htmlLinkLabel2, htmlLink);
+        VBox chatBox = new VBox(infoText, htmlLinkLabel,linkBox);
         chatBox.getStylesheets().add(styleSheet);
         c.add(chatBox);
 

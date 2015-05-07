@@ -32,7 +32,7 @@ Download the latest pre-build release from https://github.com/OptimalBI/optimal-
 * Navigate to the directory in a terminal window
 * Run "mvn package" to create the .jar in the /target directory
 * Copy the OptimalSpyglass-x.x.x.-with-dependencies.jar to your desired run directory.
-* Copy the EC2.Pricing.csv to that same directory
+* Copy the pricing directory to that same directory
 
 ## Run instructions (All users): ##
 * Run "OptimalSpyglass-x.x.x.jar"
@@ -50,9 +50,8 @@ Download the latest pre-build release from https://github.com/OptimalBI/optimal-
 ## Current functionality: ##
 * Multiple accounts
 * Multiple regions
-* List all Ec2 and running Redshift,RDS from those regions
+* List all Ec2 and running Redshift,RDS,DynamoDB,Glacier and S3 from those regions
 * Simple summary page of all AWS services
-* Provide CPU Util graph (maximum and median usage across six four-hour blocks per day, for the prior seven days)
 * Securing key is currently the responsibility of the user
 * Pricing based on supplied .csv files (See root directory)
     * The app will read the .csv file (Pricing.csv) and match the "Service.Size" to AWS Service types.
@@ -61,13 +60,6 @@ Download the latest pre-build release from https://github.com/OptimalBI/optimal-
     * The app currently assumes that everything is IOPS optimised
     * It is the end users responsibility to keep the pricing up to date
 * Provide standard encryption to the Secret Keys via login password method
-
-## Planned functionality: ##
-* Scheduled start and stop for all services
-* Listing all AWS services across all accounts
-* Unmanned management of AWS services
-* List all tags for AWS services
-* Provide start and stop for Ec2 (where access key allows this privilege)
 
 ## Current known issues: ##
 Please see GitHub issue tracking at https://github.com/OptimalBI/optimal-spyglass-open-source/issues
@@ -126,6 +118,7 @@ v0.8
 v1.0
     * Update AWS library to 1.9.33.
     * Reformatted GUI to give the more important stuff more room.
+    * Removed some annoying sections of the GUI that were not working as intended and replaced them with a new system
     * Added S3, DynamoDB and Glacier.
     * Added a list view so you can sort on important stuff.
 ```
