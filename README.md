@@ -1,4 +1,4 @@
-# OptimalSpyglass v0.9#
+# OptimalSpyglass v1.0#
 Copyright 2015 OptimalBI - Licensed under the Apache License, Version 2.0
 
 ## The story: ##
