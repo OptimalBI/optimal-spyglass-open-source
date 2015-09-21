@@ -1,4 +1,4 @@
-package org.timothygray.SimpleLog;
+package com.optimalbi.SimpleLog;
 
 
 /*
